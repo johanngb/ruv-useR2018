@@ -1,0 +1,3 @@
+"0","fit = RUVrinv(Y, sampleinfo$gender, geneinfo$spikectl)"
+"2","Error in is.data.frame(Y) : object 'Y' not found
+"

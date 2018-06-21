@@ -1,0 +1,962 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "source": [
+    "# The RUV Package\n",
+    "\n",
+    "## Looking to clean your data?  Learn how to Remove Unwanted Variation with R\n",
+    "\n",
+    "## useR! 2018 Brisbane\n",
+    "\n",
+    "This notebook accompanies Session 1 Slides"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "source": [
+    "# The Data"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "load(\"gender.rda\")\n",
+    "ls()\n",
+    "# Y.raw:  Summarized by RMA, but otherwise not preprocessed\n",
+    "# Y.norm: Background corrected and quantile normalized"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "Y = Y.norm\n",
+    "Y[1:5, 1:5]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "head(sampleinfo)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "head(geneinfo)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "# Load the ruv package\n",
+    "library(ruv)\n",
+    "# Graphics \n",
+    "library(ggplot2)\n",
+    "library(gridExtra)\n",
+    "gg_additions = list(aes(color=sampleinfo$region, \n",
+    "                        shape=sampleinfo$lab, \n",
+    "                        size=5, alpha=.7), \n",
+    "                    labs(color=\"Brain Region\", \n",
+    "                         shape=\"Laboratory\"),\n",
+    "                    scale_size_identity(guide=\"none\"),\n",
+    "                    scale_alpha(guide=\"none\"),\n",
+    "                    theme(legend.text=element_text(size=12),\n",
+    "                          legend.title=element_text(size=16)),\n",
+    "                    guides(color = guide_legend(override.aes = list(size = 4)),\n",
+    "                           shape = guide_legend(override.aes = list(size = 4))),\n",
+    "                    scale_color_manual(values=c(\"darkorchid3\", \"darkorange2\", \"dodgerblue3\"))\n",
+    "                   ) \n",
+    "options(repr.plot.width=8, repr.plot.height=6)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "scrolled": false,
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "ruv_svdplot(Y) + gg_additions # Technical note: centers columns by default"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "scrolled": false,
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "ruv_svdplot(residop(scale(Y,scale=FALSE), svd(scale(Y,scale=FALSE))$u[,1:5])) + gg_additions "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "ruv_svdplot(RUVIII(Y, replicate.matrix(sampleinfo[,c(\"patient\", \"region\")]), geneinfo$spikectl, k=10)) + gg_additions"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "source": [
+    "# Example Analysis (Regression)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "scrolled": true,
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fit = RUVrinv(Y, sampleinfo$gender, geneinfo$spikectl)\n",
+    "fit.summary = ruv_summary(Y, fit, sampleinfo, geneinfo)\n",
+    "head(fit.summary$C)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "ruv_hist(fit.summary)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "ruv_ecdf(fit.summary)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "ruv_ecdf(fit.summary, power=1/4)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "genecoloring = list(\n",
+    "aes(color=genetype),\n",
+    "scale_color_manual(name=\"Gene Category\", \n",
+    "                   values=alpha(c(\"green\", \"gray\", \"yellow\", \"palevioletred1\", \"purple\", \"deepskyblue\"), \n",
+    "                                c(     .2,    .15,        1,                1,        1,             1)))\n",
+    ")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "ruv_ecdf(fit.summary) + genecoloring"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "ruv_rankplot(fit.summary, \"pctl\")  # \"pctl\" is a column in \"geneinfo\".  Genes from X/Y chrom."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "scrolled": false,
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "ruv_rankplot(fit.summary, \"pctl\") + coord_cartesian(xlim=c(0,50), ylim=c(0,25))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "ruv_projectionplot(fit.summary) + genecoloring"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "ruv_volcano(fit.summary) + genecoloring"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "ruv_varianceplot(fit.summary) + genecoloring"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fit.summary.evar = ruv_summary(Y, fit, sampleinfo, geneinfo, p.type=\"evar\")\n",
+    "ruv_varianceplot(fit.summary.evar) + genecoloring"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "source": [
+    "# Did we help?"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "scrolled": false,
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "# RUV4 with k = 0 for no adjustment\n",
+    "# Equivalent to a Limma Analysis\n",
+    "fit.unadj = RUV4(Y, sampleinfo$gender, geneinfo$spikectl, 0)       \n",
+    "fit.summary.unadj = ruv_summary(Y, fit.unadj, sampleinfo, geneinfo)  \n",
+    "# Make a list of plots to compare side-by-side\n",
+    "plots = list(\n",
+    "  ruv_hist(fit.summary.unadj),\n",
+    "  ruv_hist(fit.summary),\n",
+    "  ruv_rankplot(fit.summary.unadj, \"pctl\") + \n",
+    "    coord_cartesian(xlim=c(0,50), ylim=c(0,25)),\n",
+    "  ruv_rankplot(fit.summary, \"pctl\") + \n",
+    "    coord_cartesian(xlim=c(0,50), ylim=c(0,25))\n",
+    ")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "scrolled": false,
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "grid.arrange(grobs=plots)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "source": [
+    "# Example Analyses (Global Adjustments)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "source": [
+    "# Example 1\n",
+    "\n",
+    "## Spike-in Negative Controls and Technical Replicates"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "ruv_svdplot(Y) + gg_additions"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "M = replicate.matrix(sampleinfo[,c(\"patient\", \"region\")])\n",
+    "YIII.spike.tech = RUVIII(Y, M, geneinfo$spikectl, k=10)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "ruv_svdplot(YIII.spike.tech) + gg_additions"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "# This time, set average=TRUE\n",
+    "YIII.spike.tech.avg = RUVIII(Y, M, geneinfo$spikectl, k=10, average=TRUE)\n",
+    "# Create \"metadata\" for the rows of YIII.spike.tech.avg\n",
+    "sampleinfo.spike.tech.avg = collapse.replicates(sampleinfo, M)\n",
+    "head(sampleinfo.spike.tech.avg)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "ruv_svdplot(YIII.spike.tech.avg) + \n",
+    "  aes(color=sampleinfo.spike.tech.avg$region)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "source": [
+    "# Example 2\n",
+    "\n",
+    "## Plotting just the X/Y genes"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "scrolled": false,
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "ruv_svdplot(Y[,geneinfo$pctl]) + gg_additions"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "gg_gender_region = list(aes(color=sampleinfo$region, \n",
+    "                            shape=sampleinfo$gender, \n",
+    "                            size=3, alpha=1, stroke=2), \n",
+    "                        labs(color=\"Brain Region\", \n",
+    "                             shape=\"Gender\"),\n",
+    "                        scale_size_identity(guide=\"none\"),\n",
+    "                        scale_alpha(guide=\"none\"),\n",
+    "                        scale_shape_manual(values = c(\"male\" = 5, \"female\" = 3)),\n",
+    "                        theme(legend.text=element_text(size=12),\n",
+    "                              legend.title=element_text(size=16)),\n",
+    "                        guides(color = guide_legend(override.aes = list(size = 4)),\n",
+    "                               shape = guide_legend(override.aes = list(size = 4))),\n",
+    "                        scale_color_manual(values=c(\"darkorchid3\", \"darkorange2\", \"dodgerblue3\"))\n",
+    "                       ) "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "scrolled": false,
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "ruv_svdplot(Y[,geneinfo$pctl]) + gg_gender_region"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "scrolled": false,
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "ruv_svdplot(YIII.spike.tech[,geneinfo$pctl]) + gg_gender_region"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "source": [
+    "# Example 3\n",
+    "\n",
+    "## Just the X/Y genes, Continued"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "M = replicate.matrix(sampleinfo[,c(\"patient\")])\n",
+    "YIII.hk.bio = RUVIII(Y, M, geneinfo$hkctl, k=10)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "ruv_svdplot(YIII.hk.bio[,geneinfo$pctl]) + gg_gender_region"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "scrolled": false,
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "# Create a design matrix for brain region:\n",
+    "region_mat = design.matrix(sampleinfo$region)\n",
+    "# Regress it out from the \"technical-adjusted\" dataset\n",
+    "YIII.spike.tech.region_regression = residop(YIII.spike.tech, region_mat)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "scrolled": false,
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "ruv_svdplot(YIII.spike.tech.region_regression[,geneinfo$pctl]) + gg_gender_region"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "gg_gender_region_nooutlier = list(aes(color=sampleinfo$region[-15], \n",
+    "                            shape=sampleinfo$gender[-15], \n",
+    "                            size=3, alpha=1, stroke=2), \n",
+    "                        labs(color=\"Brain Region\", \n",
+    "                             shape=\"Gender\"),\n",
+    "                        scale_size_identity(guide=\"none\"),\n",
+    "                        scale_alpha(guide=\"none\"),\n",
+    "                        scale_shape_manual(values = c(\"male\" = 5, \"female\" = 3)),\n",
+    "                        theme(legend.text=element_text(size=12),\n",
+    "                              legend.title=element_text(size=16)),\n",
+    "                        guides(color = guide_legend(override.aes = list(size = 4)),\n",
+    "                               shape = guide_legend(override.aes = list(size = 4))),\n",
+    "                        scale_color_manual(values=c(\"darkorchid3\", \"darkorange2\", \"dodgerblue3\"))\n",
+    "                       ) "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "scrolled": false,
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "ruv_svdplot(YIII.spike.tech.region_regression[-15,geneinfo$pctl]) + gg_gender_region_nooutlier"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "scrolled": false,
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "ruv_svdplot(YIII.spike.tech.region_regression[-15,geneinfo$pctl], k=3:4) + gg_gender_region_nooutlier"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "source": [
+    "# Final Example"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "M = replicate.matrix(sampleinfo[,c(\"region\")])\n",
+    "newY3 = RUVIII(Y, M, geneinfo$hkctl, k=10)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "ruv_svdplot(newY3) + gg_additions"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "M = replicate.matrix(sampleinfo[,c(\"region\")], burst=c(\"cerebellum\", \"D.L.P.F..cortex\"))\n",
+    "newY3 = RUVIII(Y, M, geneinfo$hkctl, k=10)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "ruv_svdplot(newY3) + gg_additions"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "source": [
+    "# Examples with Shiny"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "source": [
+    "# Balanced Design"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "scrolled": true,
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "library(ruv)\n",
+    "library(shiny)\n",
+    "library(colourpicker)\n",
+    "load(\"gender.rda\")\n",
+    "Y = Y.norm\n",
+    "ruv_shiny(Y,sampleinfo,geneinfo,options=list(port=3840,host=\"0.0.0.0\"))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "source": [
+    "# Imbalanced Design"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "scrolled": true,
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "keep = rep(T,nrow(Y))\n",
+    "keep[sampleinfo$lab==\"Davis\" & sampleinfo$gender==\"male\"] = FALSE\n",
+    "keep[sampleinfo$lab==\"Michigan\" & sampleinfo$gender==\"female\"] = FALSE\n",
+    "Y.imb = Y[keep,]\n",
+    "sampleinfo.imb = sampleinfo[keep,]\n",
+    "ruv_shiny(Y.imb,sampleinfo.imb,geneinfo,options=list(port=3840,host=\"0.0.0.0\"))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "scrolled": true,
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "keep = rep(T,nrow(Y))\n",
+    "keep[sampleinfo$lab==\"Davis\" & sampleinfo$gender==\"male\"] = FALSE\n",
+    "keep[sampleinfo$lab==\"Michigan\" & sampleinfo$gender==\"female\"] = FALSE\n",
+    "Y.imb = Y.raw[keep,]\n",
+    "sampleinfo.imb = sampleinfo[keep,]\n",
+    "ruv_shiny(Y.imb,sampleinfo.imb,geneinfo,options=list(port=3840,host=\"0.0.0.0\"))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "source": [
+    "# Brain Region"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "ruv_shiny(Y.raw,sampleinfo,geneinfo,options=list(port=3840,host=\"0.0.0.0\"))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "newY = RUVI(Y.raw, 1, geneinfo$spikectl)\n",
+    "M = replicate.matrix(sampleinfo[,c(\"patient\", \"region\")])\n",
+    "newY = RUVIII(newY, M, geneinfo$spikectl, k=4, average=TRUE)\n",
+    "newsampleinfo = collapse.replicates(sampleinfo, M)\n",
+    "fit = RUV4(newY, newsampleinfo$cortex, rep(TRUE,ncol(newY)), k=1)\n",
+    "fit = ruv_summary(newY, fit, newsampleinfo, geneinfo)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "ruv_ecdf(fit, uniform.lines=seq(0,1,by=.1))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "mean(fit$C$F.p > .25)\n",
+    "mean(fit$C$F.p.BH > .5)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "ectl = colnames(newY) %in% rownames(fit$C)[fit$C$F.p.BH > .5]\n",
+    "geneinfo = cbind(geneinfo, neg.cer=ectl)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "slideshow": {
+     "slide_type": "-"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "ruv_shiny(Y.raw, sampleinfo, geneinfo)"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "R",
+   "language": "R",
+   "name": "ir"
+  },
+  "language_info": {
+   "codemirror_mode": "r",
+   "file_extension": ".r",
+   "mimetype": "text/x-r-source",
+   "name": "R",
+   "pygments_lexer": "r",
+   "version": "3.4.4"
+  },
+  "livereveal": {
+   "height": "768",
+   "transition": "none",
+   "width": "1024"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 2
+}

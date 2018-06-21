@@ -1,0 +1,1 @@
+{"frames":[{"character_number":0,"end_character_number":0,"end_line_number":0,"file":"","func":"RUVrinv(Y, sampleinfo$gender, geneinfo$spikectl)","line_number":0},{"character_number":0,"end_character_number":0,"end_line_number":0,"file":"","func":"is.data.frame(Y)","line_number":0}],"message":"Error in is.data.frame(Y) : object 'Y' not found\n"}
