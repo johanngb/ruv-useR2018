@@ -2,14 +2,14 @@
 title: "Removing unwanted variation - III (RUV-III)"
 subtitle: "useR! 2018 - Brisbane"
 output:
+  github_document:
+    toc: yes
+    toc_depth: 3
   html_document:
     df_print: paged
     toc: yes
     toc_depth: 2
     toc_float: yes
-  github_document:
-    toc: yes
-    toc_depth: 3
 ---
 
 
@@ -22,7 +22,7 @@ library(corrplot)
 ```
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE,eval=TRUE,cache=FALSE)
+knitr::opts_chunk$set(echo = TRUE,eval=TRUE,cache=TRUE)
 library(here)
 ```
 
