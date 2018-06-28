@@ -1,6 +1,6 @@
 How to remove unwanted variations from transcriptomics data using RUVinv and RUV4
 ================
-true
+Sepideh Foroutan and Marie Trussart
 
 -   [Data description](#data-description)
 -   [Assessment of unwanted variations in the data.](#assessment-of-unwanted-variations-in-the-data.)
