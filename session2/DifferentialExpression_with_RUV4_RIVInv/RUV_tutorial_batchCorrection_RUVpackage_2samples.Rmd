@@ -2,8 +2,9 @@
 title: "How to remove unwanted variations from transcriptomics data using RUVinv and RUV4"
 author:
 - name: Sepideh Foroutan and Marie Trussart
-
 output:
+  github_document:
+    toc: yes
   html_notebook:
     number_sections: yes
     toc: yes
