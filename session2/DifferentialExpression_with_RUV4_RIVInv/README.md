@@ -5,7 +5,7 @@ true
 -   [Data description](#data-description)
 -   [Assessment of unwanted variations in the data.](#assessment-of-unwanted-variations-in-the-data.)
     -   [RLE plot](#rle-plot)
-    -   [MDS plot](#mds-plot)
+    -   [PCA plot](#pca-plot)
 -   [Remove batch effects using RUVinv](#remove-batch-effects-using-ruvinv)
 -   [Comparison of RUVinv method with RUV4 method](#comparison-of-ruvinv-method-with-ruv4-method)
     -   [Betahat correlation](#betahat-correlation)
@@ -229,10 +229,10 @@ ruv_rle(YB,info_samplesB$platform,ylim = c(-4,4))
 
 ![](RUV_tutorial_batchCorrection_RUVpackage_2samples_files/figure-markdown_github/rleplots-samplesB-2.png)
 
-MDS plot
+PCA plot
 --------
 
-In transcriptomics applications, one of the most utilized exploratory plots is the multi-dimensional scaling (MDS) plot or a principal component analysis (PCA) plot. To assess the presence of unwanted variation in each sample, we use MDS plots to show similarities between samples measured in an unsupervised way. In transcriptomics, distances between samples are calculated based on the expression of the top varying genes. Ideally, samples should cluster well within the same treatment but we can identify in our MDS plot the unwanted variation as samples rather cluster by studies in both sample A and B.
+In transcriptomics applications, one of the most utilized exploratory plots is the multi-dimensional scaling (MDS) plot or a principal component analysis (PCA) plot. To assess the presence of unwanted variation in each sample, we use PCA plots to show similarities between samples measured in an unsupervised way. In transcriptomics, distances between samples are calculated based on the expression of the top varying genes. Ideally, samples should cluster well within the same treatment but we can identify in our PCA plot the unwanted variation as samples rather cluster by studies in both sample A and B.
 In the current example, it's important to note that in a few cases the platforms and studies are confounded, and therefore there is no way to identify how much of the unwanted variation come from the study and how much come from the platform. Such situations must be avoided when designing an experiment and for the purpose of this tutorial, we only consider "study" as the true source of variation.
 
 ``` r
