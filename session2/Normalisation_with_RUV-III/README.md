@@ -82,7 +82,7 @@ ruv_svdplot(t(ExpressionData), k = c(1,2)) + list(aes(color=SampleInformation$Ti
 
 ``` r
 # Also works
-ruv_svdplot(t(ExpressionData), k = c(1,2)) + geom_point(aes(color=SampleInformation$Tissue)) + labs(color="Tissues")
+ruv_svdplot(t(ExpressionData), k = c(1,2),info = SampleInformation) + geom_point(aes(color=Tissue)) + labs(color="Tissues")
 ```
 
 ![](RUV-III_UseR_files/figure-markdown_github/unnamed-chunk-5-2.png)
@@ -152,7 +152,7 @@ corrplot(ReplicateMatrix[1:10,1:10],is.corr = FALSE)
 
 ![](RUV-III_UseR_files/figure-markdown_github/unnamed-chunk-10-1.png)
 
-Every row has at least one entry equal to 1.
+Every row has always one entry equal to 1.
 
 ``` r
 barplot(rowSums(ReplicateMatrix))
@@ -160,11 +160,13 @@ barplot(rowSums(ReplicateMatrix))
 
 ![](RUV-III_UseR_files/figure-markdown_github/unnamed-chunk-11-1.png)
 
+Every columns has at least one entry equal to 1. Samples with technical replicates will have more than one entry equal to 1.
+
 ``` r
 barplot(colSums(ReplicateMatrix))
 ```
 
-![](RUV-III_UseR_files/figure-markdown_github/unnamed-chunk-11-2.png)
+![](RUV-III_UseR_files/figure-markdown_github/unnamed-chunk-12-1.png)
 
 RUV-III
 -------
@@ -189,13 +191,13 @@ ruv_svdplot(RUVcorrected, k = c(1,2)) + list(aes(color=SampleInformation$Batch),
                                                   scale_color_manual(values=ColorBatch), labs(color="Batches") )
 ```
 
-![](RUV-III_UseR_files/figure-markdown_github/unnamed-chunk-13-1.png)
+![](RUV-III_UseR_files/figure-markdown_github/unnamed-chunk-14-1.png)
 
 ``` r
 ruv_svdplot(RUVcorrected, k = c(1,2)) + list(aes(color=SampleInformation$Tissue), labs(color="Tissues"))
 ```
 
-![](RUV-III_UseR_files/figure-markdown_github/unnamed-chunk-14-1.png)
+![](RUV-III_UseR_files/figure-markdown_github/unnamed-chunk-15-1.png)
 
 ``` r
 ColorBatch <- c("#c51b8a", "blue", "darkgreen") 
@@ -203,7 +205,7 @@ ruv_rle(Y = RUVcorrected,ylim = c(-3 , 3)) + geom_point(aes(x = rle.x.factor,y= 
        scale_color_manual(values=ColorBatch) + geom_hline(yintercept = 0,linetype="dotted",colour="cyan")+ggtitle('Normalized data with RUV-III')
 ```
 
-![](RUV-III_UseR_files/figure-markdown_github/unnamed-chunk-15-1.png)
+![](RUV-III_UseR_files/figure-markdown_github/unnamed-chunk-16-1.png)
 
 RUV-III exercise
 ================
@@ -237,9 +239,9 @@ sessionInfo()
     ## 
     ## loaded via a namespace (and not attached):
     ##  [1] Rcpp_0.12.17     magrittr_1.5     munsell_0.4.3    colorspace_1.3-2
-    ##  [5] rlang_0.2.1      highr_0.6        stringr_1.3.1    plyr_1.8.4      
-    ##  [9] tools_3.5.0      grid_3.5.0       gtable_0.2.0     htmltools_0.3.6 
-    ## [13] yaml_2.1.19      lazyeval_0.2.1   rprojroot_1.3-2  digest_0.6.15   
-    ## [17] tibble_1.4.2     gridExtra_2.3    evaluate_0.10.1  rmarkdown_1.10  
+    ##  [5] rlang_0.2.1      stringr_1.3.1    plyr_1.8.4       tools_3.5.0     
+    ##  [9] grid_3.5.0       gtable_0.2.0     htmltools_0.3.6  yaml_2.1.19     
+    ## [13] lazyeval_0.2.1   rprojroot_1.3-2  digest_0.6.15    tibble_1.4.2    
+    ## [17] gridExtra_2.3    codetools_0.2-15 evaluate_0.10.1  rmarkdown_1.10  
     ## [21] labeling_0.3     stringi_1.2.2    compiler_3.5.0   pillar_1.2.3    
     ## [25] scales_0.5.0     backports_1.1.2

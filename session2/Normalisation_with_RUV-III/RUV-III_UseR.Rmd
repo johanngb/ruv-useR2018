@@ -58,7 +58,8 @@ ruv_svdplot(t(ExpressionData), k = c(1,2)) + list(aes(color=SampleInformation$Ba
 ruv_svdplot(t(ExpressionData), k = c(1,2)) + list(aes(color=SampleInformation$Tissue), labs(color="Tissues"))
 
 # Also works
-ruv_svdplot(t(ExpressionData), k = c(1,2)) + geom_point(aes(color=SampleInformation$Tissue)) + labs(color="Tissues")
+ruv_svdplot(t(ExpressionData), k = c(1,2),info = SampleInformation) + geom_point(aes(color=Tissue)) + labs(color="Tissues")
+
 ```
 
 ```{r}
@@ -110,10 +111,15 @@ The plot below is one way to understand how the matrix of replicates is structur
 corrplot(ReplicateMatrix[1:10,1:10],is.corr = FALSE)
 ```
 
-Every row has at least one entry equal to 1. 
+Every row has always one entry equal to 1. 
 
 ```{r}
 barplot(rowSums(ReplicateMatrix))
+```
+
+Every columns has at least one entry equal to 1. Samples with technical replicates will have more than one entry equal to 1. 
+
+```{r}
 barplot(colSums(ReplicateMatrix))
 ```
 
