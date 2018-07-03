@@ -1,26 +1,28 @@
 RUV-III Challenges
 ================
 
+-   [Tasks](#tasks)
 -   [Challenge 1 data](#challenge-1-data)
 -   [Challenge 2 data](#challenge-2-data)
 
-The two challenges below are based on the RUV method for normalisation, RUV-III. There are two datasets provided containing gene expression data: `Challenge1Data.csv` and `Challenge2Data.csv`. The dataset `Challenge.information.csv` contains clinical information of the samples.
+The two challenges below are based on the RUV method for normalisation, RUV-III. There are two datasets provided containing gene expression data: `Challenge1Data.csv` and `Challenge2Data.csv`. The dataset `Challenge.information.csv` contains the clinical information of the samples (biological conditions of interest and gender of the samples).
 
-There are 5 different biological condition of interest (`Challenge.information.csv` column `BiologicalCondition`) which have been run in 5 different batches.
+There are 5 different biological conditions of interest (in `Challenge.information.csv` column `BiologicalConditions`) which have been run in 5 different batches.
 
-The two datasets are the same but one has already been normalised and the other one hasn't. **Tasks**
+Tasks
+-----
 
-Use `Challenge1Data.csv` or `Challenge2Data.csv` and assess if:
+The two datasets are the same but one has already been normalised and the other one hasn't. Use `Challenge1Data.csv` or `Challenge2Data.csv` and assess if:
 
--   Data needs normalisation
+-   The gene expression needs normalisation
 -   If the data needs normalisation, explain why and apply a normalisation.
--   If you think the data has already been normalised, explain why and comment on the quality of the normalisation.
+-   If you think the data has already been normalised, explain how you deduce it and comment on the quality of the normalisation.
 -   The same set of negative control genes is provided in both challenges. It is up to you to decide whether you need it!
 
 **Hints**
 
 -   Remember that there is not one way to tell if the data needs normalisation
--   Remember to check the biology! Consider analysing the expression of the Y chromosome genes `ZFY` and `EIF1AY` to make your decision. These genes on the Y chromosome should be expressed in male samples but not in female samples.
+-   Remember to check the known biology! Consider analysing the expression of the Y chromosome genes `ZFY` and `EIF1AY` to inform your decision. These genes on the Y chromosome should be expressed in male samples but not in female samples.
 
 Challenge 1 data
 ----------------
