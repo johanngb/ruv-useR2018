@@ -9,20 +9,17 @@ Sepideh Foroutan and Marie Trussart
 -   [Remove batch effects using RUV methods](#remove-batch-effects-using-ruv-methods)
     -   [RUVinv](#ruvinv)
         -   [Apply RUVinv using house-keeping genes](#apply-ruvinv-using-house-keeping-genes)
-        -   [Apply RUVinv using empirical control genes](#apply-ruvinv-using-empirical-control-genes)
     -   [RUV4](#ruv4)
-        -   [Apply RUV4 using empirical control genes](#apply-ruv4-using-empirical-control-genes)
         -   [Apply RUV4 using house-keeping genes](#apply-ruv4-using-house-keeping-genes)
 -   [Comparison of results of unadjusted, RUVinv- and RUV4-adjusted data](#comparison-of-results-of-unadjusted-ruvinv--and-ruv4-adjusted-data)
     -   [Unadjusted data](#unadjusted-data)
         -   [Apply DE analysis in the unadjusted data using HK genes](#apply-de-analysis-in-the-unadjusted-data-using-hk-genes)
-        -   [Apply DE analysis in the unadjusted data using empirical control genes](#apply-de-analysis-in-the-unadjusted-data-using-empirical-control-genes)
     -   [P-values distribution](#p-values-distribution)
     -   [Betahat correlation](#betahat-correlation)
     -   [Overlap between differentially expressed genes](#overlap-between-differentially-expressed-genes)
         -   [DEGs in the unadjusted data](#degs-in-the-unadjusted-data)
         -   [DEGs in the RUVinv-adjusted data](#degs-in-the-ruvinv-adjusted-data)
-        -   [DEGs in the RUV4-adjusted data](#degs-in-the-ruv4-adjusted-data)
+        -   [DEGs in the RUV4-adjusted data for different k](#degs-in-the-ruv4-adjusted-data-for-different-k)
         -   [Compare the unadjusted, RUV4 and RUVinv-adjusted in samples A data](#compare-the-unadjusted-ruv4-and-ruvinv-adjusted-in-samples-a-data)
         -   [Compare the unadjusted, RUV4 and RUVinv-adjusted in samples B data](#compare-the-unadjusted-ruv4-and-ruvinv-adjusted-in-samples-b-data)
 
@@ -422,214 +419,10 @@ ruv_ecdf(fit_ruvin_hk_samplesB.summary) + genecoloring
 
 ![](RUV_tutorial_batchCorrection_RUVpackage_2samples_files/figure-markdown_github/diagnostic-plots-intial-analysis-samplesB-3.png)
 
-### Apply RUVinv using empirical control genes
-
-According to the above results, some of the HK genes seem to be differentially expressed. In these cases, it is often recomended to use RUV4 as we can manually change the k, where smaller k may retain more of the biological signal and larger k may overadjust the data. For now, we continue with RUVinv to show how to define **empirical negative control genes**, by selecting those genes that were not statistically significant in the results of teh initital analysis. Next, we show the use of RUV4 on these data.
-
-``` r
-## Selecting empirical negative controls genes
-cGenes_samplesA <- row.names(fit_ruvin_hk_samplesA.summary$C)[fit_ruvin_hk_samplesA.summary$C$F.p.BH > 0.05]  
-length(cGenes_samplesA)
-```
-
-    ## [1] 7916
-
-``` r
-empCtrl_ruvinv_samplesA <- colnames(YA) %in% cGenes_samplesA
-
-Gene_Category <- empCtrl_ruvinv_samplesA
-Gene_Category[empCtrl_ruvinv_samplesA == T] <- "EmpCtl"
-Gene_Category[empCtrl_ruvinv_samplesA == F] <- "Non_EmpCtl"
-Emp_Ct_Genes_samplesA <- data.frame(geneids = colnames(YA),
-                                    empCt_RUV = empCtrl_ruvinv_samplesA,
-                                    Categ = Gene_Category)
-head(Emp_Ct_Genes_samplesA)
-```
-
-    ##   geneids empCt_RUV      Categ
-    ## 1       2      TRUE     EmpCtl
-    ## 2       9     FALSE Non_EmpCtl
-    ## 3      10      TRUE     EmpCtl
-    ## 4      12      TRUE     EmpCtl
-    ## 5      13      TRUE     EmpCtl
-    ## 6      14      TRUE     EmpCtl
-
-And similarly for sample B:
-
-``` r
-## Select empirical negative controls genes
-cGenes_samplesB <- row.names(fit_ruvin_hk_samplesB.summary$C)[fit_ruvin_hk_samplesB.summary$C$F.p.BH > 0.05]
-length(cGenes_samplesB)
-```
-
-    ## [1] 8919
-
-``` r
-empCtrl_ruvinv_samplesB<- colnames(YB) %in% cGenes_samplesB
-
-Gene_Category <- empCtrl_ruvinv_samplesB
-Gene_Category[empCtrl_ruvinv_samplesB==T]="EmpCtl"
-Gene_Category[empCtrl_ruvinv_samplesB==F]="Non_EmpCtl"
-Emp_Ct_Genes_samplesB <- data.frame(geneids = colnames(YB),
-                                    empCt_RUV = empCtrl_ruvinv_samplesB,
-                                    Categ = Gene_Category)
-
-head(Emp_Ct_Genes_samplesB)
-```
-
-    ##   geneids empCt_RUV      Categ
-    ## 1       2      TRUE     EmpCtl
-    ## 2       9      TRUE     EmpCtl
-    ## 3      10      TRUE     EmpCtl
-    ## 4      12     FALSE Non_EmpCtl
-    ## 5      13      TRUE     EmpCtl
-    ## 6      14      TRUE     EmpCtl
-
-Now we use those empirical control genes to apply RUVinv in samples A and B data sets.
-
-``` r
-##---- In samples A data:
-fit_ruvin_emp_samplesA <- RUVinv(Y = YA, X = gA, 
-                                 ctl = Emp_Ct_Genes_samplesA$empCt_RUV,
-                                 Z = 1, fullW0 = NULL, 
-                                 lambda = NULL, iterN = 100000)
-
-fit_ruvin_emp_samplesA.summary <- ruv_summary(YA, fit_ruvin_emp_samplesA, 
-                                             info_samplesA,              ## row info
-                                             Emp_Ct_Genes_samplesA)      ## col info
-
-##---- In samples B data: 
-fit_ruvin_emp_samplesB <- RUVinv(Y = YB, X = gB, 
-                                ctl = Emp_Ct_Genes_samplesB$empCt_RUV, 
-                                Z = 1, fullW0 = NULL, 
-                                lambda = NULL, iterN = 100000)
-
-fit_ruvin_emp_samplesB.summary <- ruv_summary(YB, fit_ruvin_emp_samplesB, 
-                                             info_samplesB, 
-                                             Emp_Ct_Genes_samplesB)
-```
-
-Here, we look at the statistics obtained for samples A data.
-
-``` r
-## Look at the distribution of p-values
-ruv_hist(fit_ruvin_emp_samplesA.summary)
-```
-
-![](RUV_tutorial_batchCorrection_RUVpackage_2samples_files/figure-markdown_github/emp-ruvinv-sampleA-results-1.png)
-
-``` r
-## Look at the Volcano plot
-genecoloring <- list(aes(color = Categ), 
-                    scale_color_manual(name = "Gene Category",
-                                       values = alpha(c("Black", "red"),
-                                                      c( 0.1, 0.25))))
-ruv_volcano(fit_ruvin_emp_samplesA.summary) + genecoloring
-```
-
-![](RUV_tutorial_batchCorrection_RUVpackage_2samples_files/figure-markdown_github/emp-ruvinv-sampleA-results-2.png)
-
-``` r
-## Look at ECDF of p-values
-ruv_ecdf(fit_ruvin_emp_samplesA.summary) + genecoloring
-```
-
-![](RUV_tutorial_batchCorrection_RUVpackage_2samples_files/figure-markdown_github/emp-ruvinv-sampleA-results-3.png)
-
-Now we look at the statistics obtained for samples B data.
-
-``` r
-## Look at the distribution of p-values
-ruv_hist(fit_ruvin_emp_samplesB.summary)
-```
-
-![](RUV_tutorial_batchCorrection_RUVpackage_2samples_files/figure-markdown_github/emp-ruvinv-sampleB-results-1.png)
-
-``` r
-## Look at the volcano plot
-genecoloring <- list(aes(color = Categ),
-                    scale_color_manual(name = "Gene Category",
-                                       values = alpha(c("Black","Red"),
-                                                    c( 0.2, 0.2))))
-ruv_volcano(fit_ruvin_emp_samplesB.summary) + genecoloring
-```
-
-![](RUV_tutorial_batchCorrection_RUVpackage_2samples_files/figure-markdown_github/emp-ruvinv-sampleB-results-2.png)
-
-``` r
-## Look at ECDF of p-values
-ruv_ecdf(fit_ruvin_emp_samplesB.summary) + genecoloring
-```
-
-![](RUV_tutorial_batchCorrection_RUVpackage_2samples_files/figure-markdown_github/emp-ruvinv-sampleB-results-3.png)
-
 RUV4
 ----
 
 RUV4 can be run with different values of k in an attempt to find the optimal value. Note that although there is a function to estimate k, called **getK()**, this may not give the optimal value for k and is often recomended to be used when there is no other choice but to automate finding K (e.g. in simulations).
-
-### Apply RUV4 using empirical control genes
-
-Run RUV4 using different values of k and emprical controls.
-
-``` r
-## Instead of estimating k (commented below), we look at different values for k.
-# estimateK<- getK(YA, X=gA,
-#                  ctl=Emp_Ct_Genes_samplesA$empCt_RUV,
-#                  Z = 1, eta = NULL, fullW0 = NULL, cutoff = NULL,
-#                  method="select", l=1, inputcheck = TRUE)
-# kA <- estimateK$k   ## it will be k = 11
-
-# estimateK<- getK(YB, X=gB,
-#                  ctl=Emp_Ct_Genes_samplesB$empCt_RUV,
-#                  Z = 1, eta = NULL, fullW0 = NULL, cutoff = NULL,
-#                  method="select", l=1, inputcheck = TRUE)
-# kB <- estimateK$k   ## it will be k = 8
-
-ks <- c(1, 2, 5, 6, 7, 8, 10, 11, 12, 15, 18, 20, 22, 23, 24)
-## For k > 24 I got Error:
-# NaNs producedNaNs producedError in sigmashrink(fit$sigma2, fit$df) : 
-#   NA/NaN/Inf in foreign function call (arg 1)
-
-beta_corAB <- vector()
-
-for (K in ks){
-  fit_ruv4_emp_sampleA <- RUV4(YA, X = gA, 
-                            ctl = Emp_Ct_Genes_samplesA$empCt_RUV, 
-                            k = K,Z = 1, eta = NULL, 
-                            fullW0 = NULL, inputcheck = TRUE)
-  
-  fit_ruv4_emp_sampleA.summary <- ruv_summary(YA,
-                                           fit_ruv4_emp_sampleA,
-                                           info_samplesA,
-                                           Emp_Ct_Genes_samplesA)
-  
-  fit_ruv4_emp_sampleB <- RUV4(YB, X = gB, 
-                            ctl = Emp_Ct_Genes_samplesB$empCt_RUV, 
-                            k = K,Z = 1, eta = NULL, 
-                            fullW0 = NULL, inputcheck = TRUE)
-  
-  fit_ruv4_emp_sampleB.summary <- ruv_summary(YB,
-                                           fit_ruv4_emp_sampleB,
-                                           info_samplesB,
-                                           Emp_Ct_Genes_samplesB)
-  
-  currentCor <- cor.test(fit_ruv4_emp_sampleA$betahat,
-                        fit_ruv4_emp_sampleB$betahat)$estimate
-  
-  beta_corAB <- c(beta_corAB, currentCor)
-  
-}
-names(beta_corAB) <- ks
-beta_corAB ## K = 23 seems a good choice
-```
-
-    ##         1         2         5         6         7         8        10 
-    ## 0.4505538 0.5081391 0.3560355 0.4467753 0.4635078 0.4944041 0.5192080 
-    ##        11        12        15        18        20        22        23 
-    ## 0.5082332 0.5162491 0.5232818 0.5226924 0.5221719 0.5245985 0.5256932 
-    ##        24 
-    ## 0.5249530
 
 ### Apply RUV4 using house-keeping genes
 
@@ -653,28 +446,31 @@ ks <- c(1, 2, 5, 6, 7, 8, 10, 11, 12, 15, 18, 20, 22, 23, 24)
 #   NA/NaN/Inf in foreign function call (arg 1)
 
 beta_corAB_HK <- vector()
-
+fit_ruv4_hk_sampleA_all_k=list()
+fit_ruv4_hk_sampleA_all_k.summary=list()
+fit_ruv4_hk_sampleB_all_k=list()
+fit_ruv4_hk_sampleB_all_k.summary=list()
 for (K in ks){
-  fit_ruv4_hk_sampleA <- RUV4(YA, X = gA, 
+  fit_ruv4_hk_sampleA_all_k[[K]] <- RUV4(YA, X = gA, 
                             ctl = ctrl, 
                             k = K,Z = 1, eta = NULL, 
                             fullW0 = NULL, inputcheck = TRUE)
   
-  fit_ruv4_hk_sampleA.summary <- ruv_summary(YA,
-                                           fit_ruv4_hk_sampleA,
+  fit_ruv4_hk_sampleA_all_k.summary[[K]] <- ruv_summary(YA,
+                                           fit_ruv4_hk_sampleA_all_k[[K]],
                                            info_samplesA)
   
-  fit_ruv4_hk_sampleB <- RUV4(YB, X = gB, 
+  fit_ruv4_hk_sampleB_all_k[[K]] <- RUV4(YB, X = gB, 
                             ctl = ctrl, 
                             k = K,Z = 1, eta = NULL, 
                             fullW0 = NULL, inputcheck = TRUE)
   
-  fit_ruv4_hk_sampleB.summary <- ruv_summary(YB,
-                                           fit_ruv4_hk_sampleB,
+  fit_ruv4_hk_sampleB_all_k.summary[[K]] <- ruv_summary(YB,
+                                           fit_ruv4_hk_sampleB_all_k[[K]],
                                            info_samplesB)
   
-  currentCor <- cor.test(fit_ruv4_hk_sampleA$betahat,
-                        fit_ruv4_hk_sampleB$betahat)$estimate
+  currentCor <- cor.test(fit_ruv4_hk_sampleA_all_k[[K]]$betahat,
+                        fit_ruv4_hk_sampleB_all_k[[K]]$betahat)$estimate
   
   beta_corAB_HK <- c(beta_corAB_HK, currentCor)
   
@@ -693,27 +489,7 @@ beta_corAB_HK ## K = 23 seems a good choice
 As k = 23 results in the highest correlation between samples A and B data sets, we consider that as the optimal value, and we run RUV4 using k = 23.
 
 ``` r
-##------ If using EmpCtrl:
 K = 23
-fit_ruv4_emp_sampleA <- RUV4(YA, X = gA, 
-                          ctl = Emp_Ct_Genes_samplesA$empCt_RUV, 
-                          k = K,Z = 1, eta = NULL, 
-                          fullW0 = NULL, inputcheck = TRUE)
-
-fit_ruv4_emp_sampleA.summary <- ruv_summary(YA,
-                                         fit_ruv4_emp_sampleA,
-                                         info_samplesA,
-                                         Emp_Ct_Genes_samplesA)
-
-fit_ruv4_emp_sampleB <- RUV4(YB, X = gB, 
-                          ctl = Emp_Ct_Genes_samplesB$empCt_RUV, 
-                          k = K,Z = 1, eta = NULL, 
-                          fullW0 = NULL, inputcheck = TRUE)
-
-fit_ruv4_emp_sampleB.summary <- ruv_summary(YB,
-                                         fit_ruv4_emp_sampleB,
-                                         info_samplesB,
-                                         Emp_Ct_Genes_samplesB)
 
 ##------- If using HK genes:
 fit_ruv4_hk_sampleA <- RUV4(YA, X = gA, 
@@ -768,52 +544,24 @@ fit_unadj_hk_sampleB.summary <- ruv_summary(YB,
                                          info_samplesB)
 ```
 
-### Apply DE analysis in the unadjusted data using empirical control genes
-
-``` r
-# RUV4 with k = 0 for no adjustment
-# Equivalent to a Limma Analysis without considering the batch term
-
-##----- In sample A data
-fit_unadj_emp_sampleA <- RUV4(YA, X = gA, 
-                          ctl = Emp_Ct_Genes_samplesA$empCt_RUV, 
-                          k = 0)
-fit_unadj_emp_sampleA.summary <- ruv_summary(YA, 
-                                        fit_unadj_emp_sampleA,
-                                        info_samplesA, 
-                                        Emp_Ct_Genes_samplesA)
-
-##----- In sample B data
-fit_unadj_emp_sampleB <- RUV4(YB, X = gB, 
-                          ctl = Emp_Ct_Genes_samplesB$empCt_RUV, 
-                          k = 0)
-fit_unadj_emp_sampleB.summary <- ruv_summary(YB, 
-                                         fit_unadj_emp_sampleB,
-                                         info_samplesB,
-                                         Emp_Ct_Genes_samplesB)
-```
-
 P-values distribution
 ---------------------
 
 We compare the results obtained from unajusted, RUVinv- and RUV4- adjusted data using p-value distributions, correlations of beta values and venn diagrams in samples A and B data.
 
 ``` r
-ruv_hist(fit_unadj_emp_sampleA.summary) + ggtitle("Unadj_A")
+ruv_hist(fit_unadj_hk_sampleA.summary) + ggtitle("Unadj_A")
 ```
 
 ![](RUV_tutorial_batchCorrection_RUVpackage_2samples_files/figure-markdown_github/unnamed-chunk-2-1.png)
 
 ``` r
-ruv_hist(fit_unadj_emp_sampleB.summary) + ggtitle("Unadj_B")
+ruv_hist(fit_unadj_hk_sampleB.summary) + ggtitle("Unadj_B")
 ```
 
 ![](RUV_tutorial_batchCorrection_RUVpackage_2samples_files/figure-markdown_github/unnamed-chunk-2-2.png)
 
 ``` r
-# ruv_hist(fit_unadj_hk_sampleA.summary)
-# ruv_hist(fit_unadj_hk_sampleB.summary)
-
 ruv_hist(fit_ruvin_hk_samplesA.summary) + ggtitle("RUVinv_HK_A")
 ```
 
@@ -826,40 +574,16 @@ ruv_hist(fit_ruvin_hk_samplesB.summary) + ggtitle("RUVinv_HK_B")
 ![](RUV_tutorial_batchCorrection_RUVpackage_2samples_files/figure-markdown_github/unnamed-chunk-2-4.png)
 
 ``` r
-ruv_hist(fit_ruvin_emp_samplesA.summary) + ggtitle("RUVinv_Emp_A")
+ruv_hist(fit_ruv4_hk_sampleA.summary) + ggtitle("RUV4_HK_A")
 ```
 
 ![](RUV_tutorial_batchCorrection_RUVpackage_2samples_files/figure-markdown_github/unnamed-chunk-2-5.png)
 
 ``` r
-ruv_hist(fit_ruvin_emp_samplesB.summary) + ggtitle("RUVinv_Emp_B")
-```
-
-![](RUV_tutorial_batchCorrection_RUVpackage_2samples_files/figure-markdown_github/unnamed-chunk-2-6.png)
-
-``` r
-ruv_hist(fit_ruv4_hk_sampleA.summary) + ggtitle("RUV4_HK_A")
-```
-
-![](RUV_tutorial_batchCorrection_RUVpackage_2samples_files/figure-markdown_github/unnamed-chunk-2-7.png)
-
-``` r
 ruv_hist(fit_ruv4_hk_sampleB.summary) + ggtitle("RUV4_HK_B")
 ```
 
-![](RUV_tutorial_batchCorrection_RUVpackage_2samples_files/figure-markdown_github/unnamed-chunk-2-8.png)
-
-``` r
-ruv_hist(fit_ruv4_emp_sampleA.summary) + ggtitle("RUV4_Emp_A")
-```
-
-![](RUV_tutorial_batchCorrection_RUVpackage_2samples_files/figure-markdown_github/unnamed-chunk-2-9.png)
-
-``` r
-ruv_hist(fit_ruv4_emp_sampleB.summary) + ggtitle("RUV4_Emp_B")
-```
-
-![](RUV_tutorial_batchCorrection_RUVpackage_2samples_files/figure-markdown_github/unnamed-chunk-2-10.png)
+![](RUV_tutorial_batchCorrection_RUVpackage_2samples_files/figure-markdown_github/unnamed-chunk-2-6.png)
 
 Betahat correlation
 -------------------
@@ -868,46 +592,46 @@ For each of the unadjusted, RUVinv- and RUV4- adjusted settings, we can compare 
 
 ``` r
 ##------ Unadjusted data sets
-plot(fit_unadj_emp_sampleA$betahat, 
-     fit_unadj_emp_sampleB$betahat,
+plot(fit_unadj_hk_sampleA$betahat, 
+     fit_unadj_hk_sampleB$betahat,
      xlab = "Betahat Samples A",
      ylab = "Betahat Samples B",
      main = "Unadjusted",
      xlim = c(-3,3), cex = 0.3, ylim = c(-4,4))
-corVal <- cor.test(fit_unadj_emp_sampleA$betahat, fit_unadj_emp_sampleB$betahat)$estimate
+corVal <- cor.test(fit_unadj_hk_sampleA$betahat, fit_unadj_hk_sampleB$betahat)$estimate
 text(-3,3, pos = 4, paste("Correlation: ", round(corVal,2), sep = ""))
 ```
 
-![](RUV_tutorial_batchCorrection_RUVpackage_2samples_files/figure-markdown_github/cor-betahat-A-B-EmpCtl-1.png)
+![](RUV_tutorial_batchCorrection_RUVpackage_2samples_files/figure-markdown_github/cor-betahat-A-B-HK-1.png)
 
 ``` r
 ##------ RUVinv adjusted data sets
-plot(fit_ruvin_emp_samplesA$betahat,
-     fit_ruvin_emp_samplesB$betahat,
+plot(fit_ruvin_hk_samplesA$betahat,
+     fit_ruvin_hk_samplesB$betahat,
      xlab = "Betahat Samples A",
      ylab = "Betahat Samples B",
      main = "RUVinv",
      xlim = c(-3,3), cex=0.3, ylim=c(-4,4))
-corVal <- cor.test(fit_ruvin_emp_samplesA$betahat, fit_ruvin_emp_samplesB$betahat)$estimate
+corVal <- cor.test(fit_ruvin_hk_samplesA$betahat, fit_ruvin_hk_samplesB$betahat)$estimate
 text(-3,3, pos = 4, paste("Correlation: ", round(corVal,2), sep = ""))
 ```
 
-![](RUV_tutorial_batchCorrection_RUVpackage_2samples_files/figure-markdown_github/cor-betahat-A-B-EmpCtl-2.png)
+![](RUV_tutorial_batchCorrection_RUVpackage_2samples_files/figure-markdown_github/cor-betahat-A-B-HK-2.png)
 
 ``` r
 #------- RUV4 adjusted data sets
-plot(fit_ruv4_emp_sampleA$betahat,
-     fit_ruv4_emp_sampleB$betahat,
+plot(fit_ruv4_hk_sampleA$betahat,
+     fit_ruv4_hk_sampleB$betahat,
      xlab = "Betahat Samples A",
      ylab = "Betahat Samples B",
      main = "RUV4",
      xlim = c(-3,3), cex = 0.3, ylim = c(-4,4))
 #abline(fit_ruv4_emp_sampleB$betahat,fit_ruv4_emp_sampleA$betahat)
-corVal <- cor.test(fit_ruv4_emp_sampleA$betahat, fit_ruv4_emp_sampleB$betahat)$estimate
+corVal <- cor.test(fit_ruv4_hk_sampleA$betahat, fit_ruv4_hk_sampleB$betahat)$estimate
 text(-3,3, pos=4, paste("Correlation: ", round(corVal,2),sep=""))
 ```
 
-![](RUV_tutorial_batchCorrection_RUVpackage_2samples_files/figure-markdown_github/cor-betahat-A-B-EmpCtl-3.png)
+![](RUV_tutorial_batchCorrection_RUVpackage_2samples_files/figure-markdown_github/cor-betahat-A-B-HK-3.png)
 
 Overlap between differentially expressed genes
 ----------------------------------------------
@@ -917,18 +641,28 @@ First, we define DEGs as genes with adjusted p-value &lt; 0.05 and |logFC| &gt; 
 
 ``` r
 ##------ In sample A data
-DEGsUnadj_sampleA <- row.names(fit_unadj_emp_sampleA.summary$C)[fit_unadj_emp_sampleA.summary$C$F.p.BH < 0.05 & abs(fit_unadj_emp_sampleA.summary$C$b_X1) > 1]
+DEGsUnadj_sampleA <- row.names(fit_unadj_hk_sampleA.summary$C)[fit_unadj_hk_sampleA.summary$C$F.p.BH < 0.05 & abs(fit_unadj_hk_sampleA.summary$C$b_X1) > 1]
 
-DEGsRUVinv_sampleA <- row.names(fit_ruvin_emp_samplesA.summary$C)[fit_ruvin_emp_samplesA.summary$C$F.p.BH < 0.05 & abs(fit_ruvin_emp_samplesA.summary$C$b_X1) > 1]
+DEGsRUVinv_sampleA <- row.names(fit_ruvin_hk_samplesA.summary$C)[fit_ruvin_hk_samplesA.summary$C$F.p.BH < 0.05 & abs(fit_ruvin_hk_samplesA.summary$C$b_X1) > 1]
 
-DEGsRUV4_sampleA <- row.names(fit_ruv4_emp_sampleA.summary$C)[fit_ruv4_emp_sampleA.summary$C$F.p.BH < 0.05 & abs(fit_ruv4_emp_sampleA.summary$C$b_X1) > 1]  
+DEGsRUV4_sampleA <- row.names(fit_ruv4_hk_sampleA.summary$C)[fit_ruv4_hk_sampleA.summary$C$F.p.BH < 0.05 & abs(fit_ruv4_hk_sampleA.summary$C$b_X1) > 1]  
+
+DEGsRUV4_sampleA_all_k=list()
+for (K in ks){
+  DEGsRUV4_sampleA_all_k[[K]]<- row.names(fit_ruv4_hk_sampleA_all_k.summary[[K]]$C)[fit_ruv4_hk_sampleA_all_k.summary[[K]]$C$F.p.BH < 0.05 & abs(fit_ruv4_hk_sampleA_all_k.summary[[K]]$C$b_X1) > 1]  
+}
 
 ##------ In sample B data:
-DEGsUnadj_sampleB <- row.names(fit_unadj_emp_sampleB.summary$C)[fit_unadj_emp_sampleB.summary$C$F.p.BH < 0.05 & abs(fit_unadj_emp_sampleB.summary$C$b_X1) > 1]
+DEGsUnadj_sampleB <- row.names(fit_unadj_hk_sampleB.summary$C)[fit_unadj_hk_sampleB.summary$C$F.p.BH < 0.05 & abs(fit_unadj_hk_sampleB.summary$C$b_X1) > 1]
 
-DEGsRUVinv_sampleB<- row.names(fit_ruvin_emp_samplesB.summary$C)[fit_ruvin_emp_samplesB.summary$C$F.p.BH < 0.05 & abs(fit_ruvin_emp_samplesB.summary$C$b_X1) > 1] 
+DEGsRUVinv_sampleB<- row.names(fit_ruvin_hk_samplesB.summary$C)[fit_ruvin_hk_samplesB.summary$C$F.p.BH < 0.05 & abs(fit_ruvin_hk_samplesB.summary$C$b_X1) > 1] 
 
-DEGsRUV4_sampleB <- row.names(fit_ruv4_emp_sampleB.summary$C)[fit_ruv4_emp_sampleB.summary$C$F.p.BH < 0.05 & abs(fit_ruv4_emp_sampleB.summary$C$b_X1) > 1]  
+DEGsRUV4_sampleB <- row.names(fit_ruv4_hk_sampleB.summary$C)[fit_ruv4_hk_sampleB.summary$C$F.p.BH < 0.05 & abs(fit_ruv4_hk_sampleB.summary$C$b_X1) > 1]  
+
+DEGsRUV4_sampleB_all_k=list()
+for (K in ks){
+  DEGsRUV4_sampleB_all_k[[K]]<- row.names(fit_ruv4_hk_sampleB_all_k.summary[[K]]$C)[fit_ruv4_hk_sampleB_all_k.summary[[K]]$C$F.p.BH < 0.05 & abs(fit_ruv4_hk_sampleB_all_k.summary[[K]]$C$b_X1) > 1]  
+}
 ```
 
 ### DEGs in the unadjusted data
@@ -989,33 +723,53 @@ vennDiagram(vennCounts(Counts_RUVinv),
 
 ![](RUV_tutorial_batchCorrection_RUVpackage_2samples_files/figure-markdown_github/Venn-DEGs-RUVinv-1.png)
 
-### DEGs in the RUV4-adjusted data
+### DEGs in the RUV4-adjusted data for different k
 
 Venn diagram comparing the RUV4-adjusted samples A and B data.
 
 ``` r
-allDEGs_RUV4<- c(DEGsRUV4_sampleA, DEGsRUV4_sampleB)
+# 
+# allDEGs_RUV4<- c(DEGsRUV4_sampleA, DEGsRUV4_sampleB)
+# ## remove duplicated gene symbols:
+# allDEGs_RUV4<- allDEGs_RUV4[!duplicated(allDEGs_RUV4)]  
+# ## Draw a Venn diagram comparing DEGs for RUV4
+# Counts_RUV4 <- matrix(0, nrow= length(allDEGs_RUV4), ncol=2)
+# row.names(Counts_RUV4)<- allDEGs_RUV4
+# colnames(Counts_RUV4)<- c("RUV4_A","RUV4_B")
+# 
+# for( i in 1:length(allDEGs_RUV4)) {
+#   Counts_RUV4[i,1]<- allDEGs_RUV4[i] %in% DEGsRUV4_sampleA
+#   Counts_RUV4[i,2]<- allDEGs_RUV4[i] %in% DEGsRUV4_sampleB
+# }
+# 
+# col<- c("blue", "violet")
+# vennDiagram(vennCounts(Counts_RUV4), 
+#             circle.col = col, 
+#             cex = c(1.6, 1.2, 1), lwd = 2)
 
-## remove duplicated gene symbols:
-allDEGs_RUV4<- allDEGs_RUV4[!duplicated(allDEGs_RUV4)]  
+allDEGs_RUV4_all_k=list()
+for (K in ks){
+  allDEGs_RUV4_all_k[[K]]=c(DEGsRUV4_sampleA_all_k[[K]],DEGsRUV4_sampleB_all_k[[K]])
+  ## remove duplicated gene symbols:
+  allDEGs_RUV4_all_k[[K]]<- allDEGs_RUV4_all_k[[K]][!duplicated(allDEGs_RUV4_all_k[[K]])]  
+  ## Draw a Venn diagram comparing DEGs for RUV4
+  Counts_RUV4<- matrix(0, nrow= length(allDEGs_RUV4_all_k[[K]]), ncol=2)
+  row.names(Counts_RUV4)<- allDEGs_RUV4_all_k[[K]]
+  colnames(Counts_RUV4)<- c(paste("RUV4_A_K_",K,sep=""),paste("RUV4_B_K_",K,sep=""))
 
-## Draw a Venn diagram comparing DEGs for RUV4
-Counts_RUV4 <- matrix(0, nrow= length(allDEGs_RUV4), ncol=2)
-row.names(Counts_RUV4)<- allDEGs_RUV4
-colnames(Counts_RUV4)<- c("RUV4_A","RUV4_B")
+  for( i in 1:length(allDEGs_RUV4_all_k[[K]])) {
+    Counts_RUV4[i,1]<- allDEGs_RUV4_all_k[[K]][i] %in% DEGsRUV4_sampleA_all_k[[K]]
+    Counts_RUV4[i,2]<- allDEGs_RUV4_all_k[[K]][i] %in% DEGsRUV4_sampleB_all_k[[K]]
+  }
 
-for( i in 1:length(allDEGs_RUV4)) {
-  Counts_RUV4[i,1]<- allDEGs_RUV4[i] %in% DEGsRUV4_sampleA
-  Counts_RUV4[i,2]<- allDEGs_RUV4[i] %in% DEGsRUV4_sampleB
-}
-
-col<- c("blue", "violet")
-vennDiagram(vennCounts(Counts_RUV4), 
+  col<- c("blue", "violet")
+  vennDiagram(vennCounts(Counts_RUV4), 
             circle.col = col, 
             cex = c(1.6, 1.2, 1), lwd = 2)
+}
 ```
 
-![](RUV_tutorial_batchCorrection_RUVpackage_2samples_files/figure-markdown_github/Venn-DEGs-RUV4-1.png)
+![](RUV_tutorial_batchCorrection_RUVpackage_2samples_files/figure-markdown_github/Venn-DEGs-RUV4-1.png)![](RUV_tutorial_batchCorrection_RUVpackage_2samples_files/figure-markdown_github/Venn-DEGs-RUV4-2.png)![](RUV_tutorial_batchCorrection_RUVpackage_2samples_files/figure-markdown_github/Venn-DEGs-RUV4-3.png)![](RUV_tutorial_batchCorrection_RUVpackage_2samples_files/figure-markdown_github/Venn-DEGs-RUV4-4.png)![](RUV_tutorial_batchCorrection_RUVpackage_2samples_files/figure-markdown_github/Venn-DEGs-RUV4-5.png)![](RUV_tutorial_batchCorrection_RUVpackage_2samples_files/figure-markdown_github/Venn-DEGs-RUV4-6.png)![](RUV_tutorial_batchCorrection_RUVpackage_2samples_files/figure-markdown_github/Venn-DEGs-RUV4-7.png)![](RUV_tutorial_batchCorrection_RUVpackage_2samples_files/figure-markdown_github/Venn-DEGs-RUV4-8.png)![](RUV_tutorial_batchCorrection_RUVpackage_2samples_files/figure-markdown_github/Venn-DEGs-RUV4-9.png)![](RUV_tutorial_batchCorrection_RUVpackage_2samples_files/figure-markdown_github/Venn-DEGs-RUV4-10.png)![](RUV_tutorial_batchCorrection_RUVpackage_2samples_files/figure-markdown_github/Venn-DEGs-RUV4-11.png)![](RUV_tutorial_batchCorrection_RUVpackage_2samples_files/figure-markdown_github/Venn-DEGs-RUV4-12.png)![](RUV_tutorial_batchCorrection_RUVpackage_2samples_files/figure-markdown_github/Venn-DEGs-RUV4-13.png)![](RUV_tutorial_batchCorrection_RUVpackage_2samples_files/figure-markdown_github/Venn-DEGs-RUV4-14.png)![](RUV_tutorial_batchCorrection_RUVpackage_2samples_files/figure-markdown_github/Venn-DEGs-RUV4-15.png)
 
 ### Compare the unadjusted, RUV4 and RUVinv-adjusted in samples A data
 
