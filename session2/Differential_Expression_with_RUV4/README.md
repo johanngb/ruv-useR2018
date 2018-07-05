@@ -179,7 +179,7 @@ ruv_rle(YA, info_datasetA$platform, ylim = c(-5,5))
 ![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/rleplots-datasetA-2.png)
 
 ``` r
-## Plot RLE coloured by platform
+## Plot RLE coloured by tissue
 ruv_rle(YA, info_datasetA$tissue, ylim = c(-5,5))
 ```
 
@@ -284,7 +284,7 @@ gB <- cbind(as.numeric(groups_B))   ## 1 control, 2: TGFb
 
 ### Unadjusted data
 
-RUV4 with k = 0 performs no adjustment when obtaining DEGs, we do this first to see what would be the results if we did not adjust for unwanted variation.
+Before running RUV4 normalisation with different k values, we begin by performing an analysis with no adjustment, i.e. k = 0. We then assess the variability between the two data sets A and B in the presence of unwanted variation.
 
 ``` r
 # RUV4 with k = 0 for no adjustment
@@ -305,7 +305,7 @@ fit_unadj_hk_datasetB.summary <- ruv_summary(YB,
                                          info_datasetB)
 ```
 
-Look at the consistency between the results from data sets A and B when no adjustment is perfromed. Here, we look at the correlation between betahats obtained in the two data sets.
+To assess the consistency in the two unadjusted data sets A and B, we computed the correlation between the betahats (logFC) of all genes in each data set.
 
 ``` r
 ##----- Unadjusted data sets
@@ -372,7 +372,7 @@ for (K in ks){
 P-value distributions for unadjusted and RUV4-adjusted data sets
 ----------------------------------------------------------------
 
-Here we compare the results obtained from unajusted and RUV4- adjusted data using p-value distributions.
+Here we compare the results obtained from unadjusted and RUV4-adjusted data using p-value distributions.
 
 ``` r
 ## We select K = 23 
@@ -406,7 +406,7 @@ Overlapping DEGs between data sets A and B
 ------------------------------------------
 
 Finally, for each of the unadjusted and RUV4-adjusted data sets, we look at the number of overlapping differentially expressed genes (DEGs) between the two data sets A and B.
-First, we define DEGs as genes with adjusted p-value &lt; 0.05 and |logFC| &gt; 1 in data sets A and B which are unadjusted, RUV4-adjusted with K = 23, and RUV-4 adjusted with different values of K. In the next step, we look at the overlapping genes.
+First, we define DEGs as genes with adjusted p-value &lt; 0.05 and |logFC| &gt; 1 in data sets A and B which are unadjusted, RUV4-adjusted with K = 23, and RUV-4 adjusted with different values of K. Then we look at the overlapping genes in each data set.
 
 ### DEGs in the unadjusted data sets
 
