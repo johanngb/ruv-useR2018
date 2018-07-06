@@ -3,14 +3,14 @@ title: "Removing unwanted variation - III (RUV-III)"
 subtitle: "useR! 2018 - Brisbane"
 author: "Ramyar Molania and Anna Quaglieri"
 output:
-  github_document:
-    toc: yes
-    toc_depth: 3
   html_document:
     df_print: paged
     toc: yes
     toc_depth: 2
     toc_float: yes
+  github_document:
+    toc: yes
+    toc_depth: 3
 ---
 
 
@@ -47,7 +47,6 @@ kable(head(SampleInformation))
 ```{r}
 table(SampleInformation$Batch)
 table(SampleInformation$Tissue)
-sum(colnames(ExpressionData) != SampleInformation$SamleIds)
 ```
 
 

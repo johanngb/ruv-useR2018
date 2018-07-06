@@ -86,12 +86,6 @@ table(SampleInformation$Tissue)
     ##     Colorectal Terminal Ileum 
     ##            565            394
 
-``` r
-sum(colnames(ExpressionData) != SampleInformation$SamleIds)
-```
-
-    ## [1] 46
-
 The variable `Tissue` is the biology that we are interested in and we would expect that gene expression separates the different tissues. The variable `Batch` distinguishes samples processed with reagents bought at different times. The component of the regeants itself are the same but they were provided in different batches.
 
 Visualise your data
