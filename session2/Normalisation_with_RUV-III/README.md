@@ -97,8 +97,9 @@ Where `ruv` meets `ggplot`: `ruv::ruv_svdplot`
 ``` r
 ColorBatch <- c("#c51b8a", "blue", "darkgreen")
 
-ruv_svdplot(t(ExpressionData), k = c(1, 2), info = SampleInformation) + geom_point(aes(color = Batch)) + 
-    scale_color_manual(values = ColorBatch) + labs(color = "Batches")
+ruv_svdplot(Y.data = t(ExpressionData), k = c(1, 2), info = SampleInformation) + 
+    geom_point(aes(color = Batch)) + scale_color_manual(values = ColorBatch) + 
+    labs(color = "Batches")
 ```
 
 ![](RUV-III_UseR_files/figure-markdown_github/unnamed-chunk-5-1.png)
@@ -111,8 +112,22 @@ ruv_svdplot(t(ExpressionData), k = c(1, 2), info = SampleInformation) + geom_poi
 ![](RUV-III_UseR_files/figure-markdown_github/unnamed-chunk-6-1.png)
 
 ``` r
-ruv_svdplot(t(ExpressionData), k = c(1, 3), info = SampleInformation) + geom_point(aes(color = Batch, 
-    shape = Tissue)) + scale_color_manual(values = ColorBatch) + labs(color = "Batches")
+library(gridExtra)
+
+plots = list(
+  
+  batch = ruv_svdplot(t(ExpressionData), k = c(1,3),info = SampleInformation) + 
+  geom_point(aes(color=Batch)) +
+  scale_color_manual(values=ColorBatch) +
+  labs(color="Batches"),
+  
+  tissue = ruv_svdplot(t(ExpressionData), k = c(1,3),info = SampleInformation) + 
+  geom_point(aes(color=Tissue)) +
+  scale_color_manual(values=ColorBatch) +
+  labs(color="Batches")
+)
+
+grid.arrange(grobs=plots)
 ```
 
 ![](RUV-III_UseR_files/figure-markdown_github/unnamed-chunk-7-1.png)
@@ -184,6 +199,18 @@ dim(SampleInformation)
 ```
 
     ## [1] 959   3
+
+``` r
+head(ReplicateMatrix[, 1:6])
+```
+
+    ##   Sample_1 Sample_100 Sample_101 Sample_102 Sample_104 Sample_105
+    ## 1        1          0          0          0          0          0
+    ## 2        0          0          0          0          0          0
+    ## 3        0          0          0          0          0          0
+    ## 4        0          0          0          0          0          0
+    ## 5        1          0          0          0          0          0
+    ## 6        0          0          0          0          0          0
 
 The number of technical replicates in the study can be found as the difference between the number of rows and columns of `ReplicateMatrix`. In this study there are 46 techical replicates.
 

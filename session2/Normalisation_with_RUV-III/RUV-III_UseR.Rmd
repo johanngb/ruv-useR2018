@@ -59,7 +59,7 @@ The variable `Tissue` is the biology that we are interested in and we would expe
 ```{r}
 ColorBatch <- c("#c51b8a", "blue", "darkgreen") 
 
-ruv_svdplot(t(ExpressionData), k = c(1,2),info = SampleInformation) + 
+ruv_svdplot(Y.data = t(ExpressionData), k = c(1,2),info = SampleInformation) + 
   geom_point(aes(color=Batch)) + 
   scale_color_manual(values=ColorBatch) + 
   labs(color="Batches")
@@ -74,10 +74,22 @@ ruv_svdplot(t(ExpressionData), k = c(1,2),info = SampleInformation) +
 ```
 
 ```{r}
-ruv_svdplot(t(ExpressionData), k = c(1,3),info = SampleInformation) + 
-  geom_point(aes(color=Batch,shape=Tissue)) +
+library(gridExtra)
+
+plots = list(
+  
+  batch = ruv_svdplot(t(ExpressionData), k = c(1,3),info = SampleInformation) + 
+  geom_point(aes(color=Batch)) +
+  scale_color_manual(values=ColorBatch) +
+  labs(color="Batches"),
+  
+  tissue = ruv_svdplot(t(ExpressionData), k = c(1,3),info = SampleInformation) + 
+  geom_point(aes(color=Tissue)) +
   scale_color_manual(values=ColorBatch) +
   labs(color="Batches")
+)
+
+grid.arrange(grobs=plots)
 ```
 
 
@@ -121,6 +133,7 @@ table(SampleInformation$SamleIds)[table(SampleInformation$SamleIds) >1]
 ReplicateMatrix <- replicate.matrix(SampleInformation$SamleIds)
 dim(ReplicateMatrix)
 dim(SampleInformation)
+head(ReplicateMatrix[,1:6])
 ```
 
 The number of technical replicates in the study can be found as the difference between the number of rows and columns of `ReplicateMatrix`. In this study there are 46 techical replicates.
