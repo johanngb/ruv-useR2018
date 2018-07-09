@@ -10,6 +10,7 @@ Momeneh (Sepideh) Foroutan and Marie Trussart
     -   [RUV4](#ruv4)
         -   [Unadjusted data](#unadjusted-data)
         -   [RUV4-adjusted data with different values of k](#ruv4-adjusted-data-with-different-values-of-k)
+    -   [Canonical correlation plot](#canonical-correlation-plot)
     -   [P-value distributions and volcano plots for unadjusted and RUV4-adjusted data sets](#p-value-distributions-and-volcano-plots-for-unadjusted-and-ruv4-adjusted-data-sets)
     -   [Overlapping DEGs between data sets A and B](#overlapping-degs-between-data-sets-a-and-b)
         -   [DEGs in the unadjusted data sets](#degs-in-the-unadjusted-data-sets)
@@ -30,7 +31,16 @@ library(ruv)            ## for applying RUV method
 library(limma)          ## for vennDiagram()
 library(ggplot2)        ## for data visualisation
 library(knitr)          ## for Kable()
+library(shiny)          ## for shiny app
+library(colourpicker)
 ```
+
+    ## 
+    ## Attaching package: 'colourpicker'
+
+    ## The following object is masked from 'package:shiny':
+    ## 
+    ##     runExample
 
 The integrated data introduced above have been split into two data sets: dataset A and dataset B, each containing different studies, platforms and tissues. We will explore and normalise these two data sets separately in order to compare the results obtained by the normalisation method RUV4.
 
@@ -251,8 +261,8 @@ ruv_svdplot(YB) + gg_additions #
 Remove batch effects using RUV-4
 ================================
 
-There are several RUV methods for removing unwanted variation in order to obtain DEGs, including RUV-2, RUV-4, RUV-inv and RUV-rinv. In general, RUV methods are dependent on **negative control genes** (genes which are not associated with the biological factor of interest) and **replicate samples** (if applicable). RUV-2 removes unwanted variation in two steps. RUV-4 was introduced after RUV-2 and has four steps. For RUV-4 we can select different values for **dimension of unwanted variation (k)**, while for RUV-inv and RUV-rinv we don't need to change k as it is set to be the maximum value. RUV-inv is recommended when we have large number of control genes (~1000), while RUV-rinv is more appropriate with small number of control genes (~60).
-Selection of negative control genes is very important. Examples of negative control genes are the *spike-in controls* or the *housekeeping (HK) genes*. It is also possible to define *empirical negative control genes* using an iterative approach, however, it is only recomended if (i) the initial negative control genes are not very good or there are only a few of them; (ii) the beta seems to be very sparse. Therefore, the user needs to generate diagnostic plots to assess the performance of the initial analysis, and only if needed, use an iterative approach to define better control genes. For this tutorial, we use HK genes as negative control genes.
+There are several RUV methods for removing unwanted variation in order to obtain DEGs, including RUV-2, RUV-4, RUV-inv and RUV-rinv. For RUV-4 we can select different values for **dimension of unwanted variation (k)**, while for RUV-inv and RUV-rinv we don't need to change k as it is set to be the maximum value. RUV-inv is recommended when we have large number of control genes (~1000), while RUV-rinv is more appropriate with small number of control genes (~60).
+Negative control genes are genes which are not associated with the biological factor of interest. Selection of negative control genes is very important. Examples of negative control genes are the *spike-in controls* or the *housekeeping (HK) genes*. It is also possible to define *empirical negative control genes* using an iterative approach, however, it is only recomended if (i) the initial negative control genes are not very good or there are only a few of them; (ii) the beta seems to be very sparse. Therefore, the user needs to generate diagnostic plots to assess the performance of the initial analysis, and only if needed, use an iterative approach to define better control genes. For this tutorial, we use HK genes as negative control genes.
 
 RUV4
 ----
@@ -314,28 +324,11 @@ fit_unadj_hk_datasetB.summary <- ruv_summary(YB,
                                          info_datasetB)
 ```
 
-To assess the consistency in the two unadjusted data sets A and B, we computed the correlation between the betahats (logFC) of all genes in each data set.
-
-``` r
-##----- Unadjusted data sets
-plot(fit_unadj_hk_datasetA$betahat, 
-     fit_unadj_hk_datasetB$betahat,
-     xlab = "Betahat dataset A",
-     ylab = "Betahat dataset B",
-     main = "Unadjusted",
-     xlim = c(-3,3), cex = 0.3, ylim = c(-4,4))
-corVal <- cor.test(fit_unadj_hk_datasetA$betahat, 
-                   fit_unadj_hk_datasetB$betahat)$estimate
-text(-3,3, pos = 4, paste("Correlation: ", round(corVal, 3), sep = ""))
-```
-
-![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/unnamed-chunk-3-1.png)
-
 ### RUV4-adjusted data with different values of k
 
 ``` r
 ## Select different values of k
-ks <- c( 1, 2, 5, 6, 7, 8, 10, 11, 12, 15, 18, 20, 22, 23, 24)
+ks <- c( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15, 18, 20, 22, 23, 24)
 
 ## Define empty lists and use them in the for loop to store the results
 fit_ruv4_hk_datasetA_all_k <- list()
@@ -361,22 +354,76 @@ for (K in ks){
   fit_ruv4_hk_datasetB_all_k.summary[[K]] <- ruv_summary(YB,
                                            fit_ruv4_hk_datasetB_all_k[[K]],
                                            info_datasetB)
-  
-  plot(fit_ruv4_hk_datasetA_all_k[[K]]$betahat,
-     fit_ruv4_hk_datasetB_all_k[[K]]$betahat,
+}  
+```
+
+Canonical correlation plot
+--------------------------
+
+In order to select an optimal value for k, we should plot, for each value of k, the square of the first canonical correlation between X and the first K left singular values of Y and Yc.
+
+``` r
+ruv_cancorplot(YA, info_datasetA$treatment, ctrl) + ggtitle("dataset A")
+```
+
+![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/unnamed-chunk-3-1.png)
+
+``` r
+ruv_cancorplot(YB, info_datasetB$treatment, ctrl) + ggtitle("dataset B")
+```
+
+![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/unnamed-chunk-3-2.png)
+
+To assess the consistency in the two data sets A and B, we computed the correlation between the betahats (logFC) of all genes in each data set.
+
+``` r
+##----- Unadjusted data sets
+plot(fit_unadj_hk_datasetA$betahat, 
+     fit_unadj_hk_datasetB$betahat,
      xlab = "Betahat dataset A",
      ylab = "Betahat dataset B",
-     main = paste("RUV4_K_", K, sep=""),
+     main = "Unadjusted",
+     xlim = c(-3,3), cex = 0.3, ylim = c(-4,4))
+corVal <- cor.test(fit_unadj_hk_datasetA$betahat, 
+                   fit_unadj_hk_datasetB$betahat)$estimate
+text(-3,3, pos = 4, paste("Correlation: ", round(corVal, 3), sep = ""))
+```
+
+![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/unnamed-chunk-4-1.png)
+
+``` r
+##------ RUV4-adjusted
+for(K in ks) {
+  plot(fit_ruv4_hk_datasetA_all_k[[K]]$betahat,
+       fit_ruv4_hk_datasetB_all_k[[K]]$betahat,
+       xlab = "Betahat dataset A",
+       ylab = "Betahat dataset B",
+       main = paste("RUV4_K_", K, sep=""),
+       xlim = c(-3,3), cex = 0.3, ylim = c(-4,4))
+  corVal <- cor.test(fit_ruv4_hk_datasetA_all_k[[K]]$betahat,
+                     fit_ruv4_hk_datasetB_all_k[[K]]$betahat)$estimate
+  text(-3,3, pos=4, paste("Correlation: ", round(corVal,3), sep=""))
+}
+```
+
+![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/unnamed-chunk-4-2.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/unnamed-chunk-4-3.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/unnamed-chunk-4-4.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/unnamed-chunk-4-5.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/unnamed-chunk-4-6.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/unnamed-chunk-4-7.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/unnamed-chunk-4-8.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/unnamed-chunk-4-9.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/unnamed-chunk-4-10.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/unnamed-chunk-4-11.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/unnamed-chunk-4-12.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/unnamed-chunk-4-13.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/unnamed-chunk-4-14.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/unnamed-chunk-4-15.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/unnamed-chunk-4-16.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/unnamed-chunk-4-17.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/unnamed-chunk-4-18.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/unnamed-chunk-4-19.png)
+
+Now, we choose k = 5 for dataset A and k = 3 for dataset B.
+
+``` r
+plot(fit_ruv4_hk_datasetA_all_k[[5]]$betahat,
+     fit_ruv4_hk_datasetB_all_k[[3]]$betahat,
+     xlab = "Betahat dataset A",
+     ylab = "Betahat dataset B",
+     main = "RUV4_KA5_KB3",
      xlim = c(-3,3), cex = 0.3, ylim = c(-4,4))
   #abline(fit_ruv4_emp_datasetB$betahat,fit_ruv4_emp_datasetA$betahat)
   corVal <- cor.test(fit_ruv4_hk_datasetA_all_k[[K]]$betahat,
                      fit_ruv4_hk_datasetB_all_k[[K]]$betahat)$estimate
-  text(-3,3, pos=4, paste("Correlation: ", round(corVal,3),sep=""))
-  
-}
+  text(-3,3, pos=4, paste("Correlation: ", round(corVal, 3),sep=""))
 ```
 
-![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/ruv4-HK-differentKs-1.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/ruv4-HK-differentKs-2.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/ruv4-HK-differentKs-3.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/ruv4-HK-differentKs-4.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/ruv4-HK-differentKs-5.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/ruv4-HK-differentKs-6.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/ruv4-HK-differentKs-7.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/ruv4-HK-differentKs-8.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/ruv4-HK-differentKs-9.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/ruv4-HK-differentKs-10.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/ruv4-HK-differentKs-11.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/ruv4-HK-differentKs-12.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/ruv4-HK-differentKs-13.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/ruv4-HK-differentKs-14.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/ruv4-HK-differentKs-15.png)
+![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/unnamed-chunk-5-1.png)
 
 P-value distributions and volcano plots for unadjusted and RUV4-adjusted data sets
 ----------------------------------------------------------------------------------
@@ -384,35 +431,36 @@ P-value distributions and volcano plots for unadjusted and RUV4-adjusted data se
 Here we compare the results obtained from unadjusted and RUV4-adjusted data using p-value distributions. A good p-value distribution has a peak for low values and show uniform distribution for the larger values.
 
 ``` r
-## We select K = 23 
-K = 23 
+KA = 5
+KB = 3
 ##----- In data set A
 ruv_hist(fit_unadj_hk_datasetA.summary) + ggtitle("Unadj_A")
 ```
 
-![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/unnamed-chunk-4-1.png)
+![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/unnamed-chunk-6-1.png)
 
 ``` r
-ruv_hist(fit_ruv4_hk_datasetA_all_k.summary[[K]]) + ggtitle("RUV4_HK_A")
+ruv_hist(fit_ruv4_hk_datasetA_all_k.summary[[KA]]) + ggtitle("RUV4_HK_A")
 ```
 
-![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/unnamed-chunk-4-2.png)
+![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/unnamed-chunk-6-2.png)
 
 ``` r
 ## ---- In data set B
 ruv_hist(fit_unadj_hk_datasetB.summary) + ggtitle("Unadj_B")
 ```
 
-![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/unnamed-chunk-4-3.png)
+![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/unnamed-chunk-6-3.png)
 
 ``` r
-ruv_hist(fit_ruv4_hk_datasetB_all_k.summary[[K]]) + ggtitle("RUV4_HK_B")
+ruv_hist(fit_ruv4_hk_datasetB_all_k.summary[[KB]]) + ggtitle("RUV4_HK_B")
 ```
 
-![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/unnamed-chunk-4-4.png) Compare the volcano plots between unadjusted and RUV4-adjusted data. A volcano plot visulaises the relationship between p-value and logFC for all genes.
+![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/unnamed-chunk-6-4.png) Compare the volcano plots between unadjusted and RUV4-adjusted data. A volcano plot visulaises the relationship between p-value and logFC for all genes.
 
 ``` r
-K = 23
+KA = 5
+KB = 3
 ##----- In data set A
 genecoloring <- list(aes(color = fit.ctl),
                      scale_color_manual(name = "Gene Category",
@@ -421,13 +469,13 @@ genecoloring <- list(aes(color = fit.ctl),
 ruv_volcano(fit_unadj_hk_datasetA.summary) + genecoloring + ggtitle("Unadj_A")
 ```
 
-![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/unnamed-chunk-5-1.png)
+![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/unnamed-chunk-7-1.png)
 
 ``` r
-ruv_volcano(fit_ruv4_hk_datasetA_all_k.summary[[K]]) + genecoloring + ggtitle("RUV4_HK_A")
+ruv_volcano(fit_ruv4_hk_datasetA_all_k.summary[[KA]]) + genecoloring + ggtitle("RUV4_HK_A")
 ```
 
-![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/unnamed-chunk-5-2.png)
+![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/unnamed-chunk-7-2.png)
 
 ``` r
 ##----- In data set A
@@ -435,13 +483,13 @@ ruv_volcano(fit_ruv4_hk_datasetA_all_k.summary[[K]]) + genecoloring + ggtitle("R
 ruv_volcano(fit_unadj_hk_datasetB.summary) + genecoloring + ggtitle("Unadj_B")
 ```
 
-![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/unnamed-chunk-5-3.png)
+![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/unnamed-chunk-7-3.png)
 
 ``` r
-ruv_volcano(fit_ruv4_hk_datasetB_all_k.summary[[K]]) + genecoloring + ggtitle("RUV4_HK_B")
+ruv_volcano(fit_ruv4_hk_datasetB_all_k.summary[[KB]]) + genecoloring + ggtitle("RUV4_HK_B")
 ```
 
-![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/unnamed-chunk-5-4.png)
+![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/unnamed-chunk-7-4.png)
 
 Overlapping DEGs between data sets A and B
 ------------------------------------------
@@ -529,7 +577,32 @@ for (K in ks){
 }
 ```
 
-![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/Venn-DEGs-RUV4-1.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/Venn-DEGs-RUV4-2.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/Venn-DEGs-RUV4-3.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/Venn-DEGs-RUV4-4.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/Venn-DEGs-RUV4-5.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/Venn-DEGs-RUV4-6.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/Venn-DEGs-RUV4-7.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/Venn-DEGs-RUV4-8.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/Venn-DEGs-RUV4-9.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/Venn-DEGs-RUV4-10.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/Venn-DEGs-RUV4-11.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/Venn-DEGs-RUV4-12.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/Venn-DEGs-RUV4-13.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/Venn-DEGs-RUV4-14.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/Venn-DEGs-RUV4-15.png)
+![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/Venn-DEGs-RUV4-1.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/Venn-DEGs-RUV4-2.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/Venn-DEGs-RUV4-3.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/Venn-DEGs-RUV4-4.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/Venn-DEGs-RUV4-5.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/Venn-DEGs-RUV4-6.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/Venn-DEGs-RUV4-7.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/Venn-DEGs-RUV4-8.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/Venn-DEGs-RUV4-9.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/Venn-DEGs-RUV4-10.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/Venn-DEGs-RUV4-11.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/Venn-DEGs-RUV4-12.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/Venn-DEGs-RUV4-13.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/Venn-DEGs-RUV4-14.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/Venn-DEGs-RUV4-15.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/Venn-DEGs-RUV4-16.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/Venn-DEGs-RUV4-17.png)![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/Venn-DEGs-RUV4-18.png)
+
+``` r
+KA <- 5
+KB <- 3
+allDEGs_RUV4 <- c(DEGsRUV4_datasetA_all_k[[KA]],
+                             DEGsRUV4_datasetB_all_k[[KB]])
+## remove duplicated gene symbols:
+allDEGs_RUV4 <- allDEGs_RUV4[!duplicated(allDEGs_RUV4)]
+## Draw a Venn diagram comparing DEGs for RUV4
+Counts_RUV4<- matrix(0, nrow = length(allDEGs_RUV4), ncol=2)
+row.names(Counts_RUV4) <- allDEGs_RUV4
+colnames(Counts_RUV4) <- c("RUV4_KA5", "RUV4_KB3")
+
+for( i in 1:length(allDEGs_RUV4)) {
+  Counts_RUV4[i,1]<- allDEGs_RUV4[i] %in% DEGsRUV4_datasetA_all_k[[KA]]
+  Counts_RUV4[i,2]<- allDEGs_RUV4[i] %in% DEGsRUV4_datasetB_all_k[[KB]]
+}
+
+col<- c("blue", "violet")
+vennDiagram(vennCounts(Counts_RUV4),
+          circle.col = col,
+          cex = c(1.6, 1.2, 1), lwd = 2)
+```
+
+![](RUV_tutorial_batchCorrection_RUV4_files/figure-markdown_github/unnamed-chunk-8-1.png)
 
 Overlapping DEGs between unadjusted and RUV4-adjusted data sets
 ---------------------------------------------------------------
@@ -537,13 +610,13 @@ Overlapping DEGs between unadjusted and RUV4-adjusted data sets
 ### Compare DEGs from the unadjusted and RUV4-adjusted data set A
 
 ``` r
-K = 23
-##----- Define DEGs for the RUV4-adjusted data with K = 23 in data set A
-DEGsRUV4_datasetA <- row.names(fit_ruv4_hk_datasetA_all_k.summary[[K]]$C)[fit_ruv4_hk_datasetA_all_k.summary[[K]]$C$F.p.BH < 0.05 & abs(fit_ruv4_hk_datasetA_all_k.summary[[K]]$C$b_X1) > 1]  
+KA <- 5
+##----- Define DEGs for the RUV4-adjusted data with K = 5 in data set A
+DEGsRUV4_datasetA <- row.names(fit_ruv4_hk_datasetA_all_k.summary[[KA]]$C)[fit_ruv4_hk_datasetA_all_k.summary[[KA]]$C$F.p.BH < 0.05 & abs(fit_ruv4_hk_datasetA_all_k.summary[[KA]]$C$b_X1) > 1]  
 
 ##----- Look at the overalapping genes between unadjusted and RUV-4 adjusted data set A
 allDEGs_datasetA <- c(DEGsUnadj_datasetA,  
-                      DEGsRUV4_datasetA_all_k[[K]])
+                      DEGsRUV4_datasetA_all_k[[KA]])
 
 ## remove duplicated gene symbols:
 allDEGs_datasetA <- allDEGs_datasetA[!duplicated(allDEGs_datasetA)]  
@@ -551,11 +624,11 @@ allDEGs_datasetA <- allDEGs_datasetA[!duplicated(allDEGs_datasetA)]
 ## Draw a Venn diagram comparing DEGs for dataset A
 Counts_datasetA <- matrix(0, nrow= length(allDEGs_datasetA), ncol=2)
 row.names(Counts_datasetA)<- allDEGs_datasetA
-colnames(Counts_datasetA)<- c("Unadj_A", "Ruv4_A_K_23")
+colnames(Counts_datasetA)<- c("Unadj_A", "Ruv4_KA5")
 
 for( i in 1:length(allDEGs_datasetA)) {
   Counts_datasetA[i,1]<- allDEGs_datasetA[i] %in% DEGsUnadj_datasetA
-  Counts_datasetA[i,2]<- allDEGs_datasetA[i] %in% DEGsRUV4_datasetA_all_k[[K]]
+  Counts_datasetA[i,2]<- allDEGs_datasetA[i] %in% DEGsRUV4_datasetA_all_k[[KA]]
 }
 
 col<- c("blue","darkgreen")
@@ -569,13 +642,13 @@ vennDiagram(vennCounts(Counts_datasetA),
 ### Compare DEGs from the unadjusted and RUV4-adjusted data set B
 
 ``` r
-K = 23
-##----- Define DEGs for the RUV4-adjusted data with K = 23 in data set B
-DEGsRUV4_datasetB <- row.names(fit_ruv4_hk_datasetB_all_k.summary[[K]]$C)[fit_ruv4_hk_datasetB_all_k.summary[[K]]$C$F.p.BH < 0.05 & abs(fit_ruv4_hk_datasetB_all_k.summary[[K]]$C$b_X1) > 1]  
+KB <- 3
+##----- Define DEGs for the RUV4-adjusted data with K = 3 in data set B
+DEGsRUV4_datasetB <- row.names(fit_ruv4_hk_datasetB_all_k.summary[[KB]]$C)[fit_ruv4_hk_datasetB_all_k.summary[[KB]]$C$F.p.BH < 0.05 & abs(fit_ruv4_hk_datasetB_all_k.summary[[KB]]$C$b_X1) > 1]  
 
 ##----- Look at the overalapping genes between unadjusted and RUV-4 adjusted data set B
 allDEGs_datasetB <- c(DEGsUnadj_datasetB,
-                      DEGsRUV4_datasetB_all_k[[K]])
+                      DEGsRUV4_datasetB_all_k[[KB]])
 
 ## remove duplicated gene symbols:
 allDEGs_datasetB <- allDEGs_datasetB[!duplicated(allDEGs_datasetB)] 
@@ -583,11 +656,11 @@ allDEGs_datasetB <- allDEGs_datasetB[!duplicated(allDEGs_datasetB)]
 ## Draw a Venn diagram comparing DEGs for dataset B
 Counts_datasetB <- matrix(0, nrow = length(allDEGs_datasetB), ncol = 2)
 row.names(Counts_datasetB) <- allDEGs_datasetB
-colnames(Counts_datasetB) <- c("Unadj_B", "Ruv4_B_K_23")
+colnames(Counts_datasetB) <- c("Unadj_B", "Ruv4_KB3")
 
 for( i in 1:length(allDEGs_datasetB)) {
   Counts_datasetB[i,1]<- allDEGs_datasetB[i] %in% DEGsUnadj_datasetB
-  Counts_datasetB[i,2]<- allDEGs_datasetB[i] %in% DEGsRUV4_datasetB_all_k[[K]]
+  Counts_datasetB[i,2]<- allDEGs_datasetB[i] %in% DEGsRUV4_datasetB_all_k[[KB]]
 }
 
 col <- c("blue", "darkgreen")
