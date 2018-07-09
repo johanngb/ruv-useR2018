@@ -17,9 +17,9 @@ library(knitr)
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-The two challenges below are based on the RUV method for normalisation, RUV-III. There are two datasets provided containing gene expression data: `Challenge1Data.csv` and `Challenge2Data.csv`. The dataset `Challenge.information.csv` contains the clinical information of the samples (biological conditions of interest and gender of the samples).
+The two challenges below are based on the RUV method for normalisation, RUV-III. There are two datasets provided containing gene expression data obtained with Nanostring technology: `Challenge1Data.csv` and `Challenge2Data.csv`. The dataset `Challenge.information.csv` contains the clinical information of the samples (biological conditions of interest and gender of the samples).
 
-There are 5 different biological conditions of interest (in `Challenge.information.csv` column `BiologicalConditions`) which have been run in 5 different batches. 
+There are 5 different biological conditions of interest (in `Challenge.information.csv` column `Biology`) which involve T-cells treated in different ways. They have been run in 2 different runs: `Run1` and `Run2`.  
 
 ## Tasks
 
@@ -33,7 +33,7 @@ Use `Challenge1Data.csv` or `Challenge2Data.csv` and assess if:
 
 **Hints**
 
-* Remember that there is not one way to tell if the data needs normalisation
+* Remember that there is not only one way to tell if the data needs normalisation
 * Remember to check the known biology! Consider analysing the expression of the Y chromosome  genes `ZFY` and `EIF1AY` to inform your decision. These genes on the Y chromosome should be expressed in male samples but not in female samples.
 
 ## Challenge 1 data
@@ -43,7 +43,8 @@ ch1_data <- read.csv("Challenge1Data.csv", row.names = 1, as.is = TRUE, stringsA
 
 Con100 <- readRDS('controlGene100.rds')
 
-Info <- read.csv('Challenge.information.csv', row.names = 1, as.is = TRUE, stringsAsFactors = FALSE)
+Info <- read.csv('Challenge.information.csv', as.is = TRUE, stringsAsFactors = FALSE)
+
 
 ch1_data <- as.matrix(ch1_data)
 kable(ch1_data[1:4,1:4])
@@ -56,8 +57,9 @@ kable(head(Info))
 
 ```{r}
 ch2_data <- read.csv("Challenge2Data.csv", row.names = 1, as.is = TRUE, stringsAsFactors = FALSE)
+
 Con100 <- readRDS('controlGene100.rds')
-Info <- read.csv('Challenge.information.csv', row.names = 1, as.is = TRUE, stringsAsFactors = FALSE)
+Info <- read.csv('Challenge.information.csv', as.is = TRUE, stringsAsFactors = FALSE)
 
 ch2_data <- as.matrix(ch2_data)
 kable(ch2_data[1:4,1:4])

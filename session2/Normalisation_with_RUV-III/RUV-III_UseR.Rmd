@@ -3,14 +3,14 @@ title: "Removing unwanted variation - III (RUV-III)"
 subtitle: "useR! 2018 - Brisbane"
 author: "Ramyar Molania and Anna Quaglieri"
 output:
+  github_document:
+    toc: yes
+    toc_depth: 3
   html_document:
     df_print: paged
     toc: yes
     toc_depth: 2
     toc_float: yes
-  github_document:
-    toc: yes
-    toc_depth: 3
 ---
 
 
@@ -47,10 +47,13 @@ kable(head(SampleInformation))
 ```{r}
 table(SampleInformation$Batch)
 table(SampleInformation$Tissue)
+table(SampleInformation$Tissue,SampleInformation$Batch)
 ```
 
 
 The variable `Tissue` is the biology that we are interested in and we would expect that gene expression separates the different tissues. The variable `Batch` distinguishes samples processed with reagents bought at different times. The component of the regeants itself are the same but they were provided in different batches. 
+
+![](replicate_plot.png)
 
 # Visualise your data
 
@@ -172,17 +175,17 @@ RUVcorrected <- RUVIII(Y = t(ExpressionData),
 Now we can visualise the data after correction and understand if we improved the data.
 
 ```{r}
-ruv_svdplot(RUVcorrected, k = c(1,2),info=SampleInformation) + 
-  geom_point(aes(color=Tissue)) + 
-  labs(color="Tissues")
-```
-
-```{r}
 ColorBatch <- c("magenta", "blue", "darkgreen") 
 ruv_svdplot(RUVcorrected, k = c(1,2),info=SampleInformation) + 
   geom_point(aes(colour=Batch)) +  
   scale_color_manual(values=ColorBatch) + 
   labs(color="Batches")
+```
+
+```{r}
+ruv_svdplot(RUVcorrected, k = c(1,2),info=SampleInformation) + 
+  geom_point(aes(color=Tissue)) + 
+  labs(color="Tissues")
 ```
 
 ```{r}

@@ -5,9 +5,9 @@ RUV-III Challenges
 -   [Challenge 1 data](#challenge-1-data)
 -   [Challenge 2 data](#challenge-2-data)
 
-The two challenges below are based on the RUV method for normalisation, RUV-III. There are two datasets provided containing gene expression data: `Challenge1Data.csv` and `Challenge2Data.csv`. The dataset `Challenge.information.csv` contains the clinical information of the samples (biological conditions of interest and gender of the samples).
+The two challenges below are based on the RUV method for normalisation, RUV-III. There are two datasets provided containing gene expression data obtained with Nanostring technology: `Challenge1Data.csv` and `Challenge2Data.csv`. The dataset `Challenge.information.csv` contains the clinical information of the samples (biological conditions of interest and gender of the samples).
 
-There are 5 different biological conditions of interest (in `Challenge.information.csv` column `BiologicalConditions`) which have been run in 5 different batches.
+There are 5 different biological conditions of interest (in `Challenge.information.csv` column `Biology`) which involve T-cells treated in different ways. They have been run in 2 different runs: `Run1` and `Run2`.
 
 Tasks
 -----
@@ -21,7 +21,7 @@ The two datasets are the same but one has already been normalised and the other 
 
 **Hints**
 
--   Remember that there is not one way to tell if the data needs normalisation
+-   Remember that there is not only one way to tell if the data needs normalisation
 -   Remember to check the known biology! Consider analysing the expression of the Y chromosome genes `ZFY` and `EIF1AY` to inform your decision. These genes on the Y chromosome should be expressed in male samples but not in female samples.
 
 Challenge 1 data
@@ -32,7 +32,8 @@ ch1_data <- read.csv("Challenge1Data.csv", row.names = 1, as.is = TRUE, stringsA
 
 Con100 <- readRDS('controlGene100.rds')
 
-Info <- read.csv('Challenge.information.csv', row.names = 1, as.is = TRUE, stringsAsFactors = FALSE)
+Info <- read.csv('Challenge.information.csv', as.is = TRUE, stringsAsFactors = FALSE)
+
 
 ch1_data <- as.matrix(ch1_data)
 kable(ch1_data[1:4,1:4])
@@ -49,22 +50,23 @@ kable(ch1_data[1:4,1:4])
 kable(head(Info))
 ```
 
-| SampleIds | BiologicalConditions | Gender |
-|:----------|:---------------------|:-------|
-| Sample\_1 | Conditions A         | female |
-| Sample\_2 | Conditions A         | female |
-| Sample\_3 | Conditions A         | female |
-| Sample\_4 | Conditions A         | female |
-| Sample\_5 | Conditions A         | female |
-| Sample\_6 | Conditions A         | male   |
+| SampleIds | Gender | Runs | Biology           |
+|:----------|:-------|:-----|:------------------|
+| Sample\_1 | female | Run1 | Activated\_4hours |
+| Sample\_2 | female | Run1 | Activated\_4hours |
+| Sample\_3 | female | Run1 | Activated\_4hours |
+| Sample\_4 | female | Run1 | Activated\_4hours |
+| Sample\_5 | female | Run1 | Activated\_4hours |
+| Sample\_6 | male   | Run1 | Activated\_4hours |
 
 Challenge 2 data
 ----------------
 
 ``` r
 ch2_data <- read.csv("Challenge2Data.csv", row.names = 1, as.is = TRUE, stringsAsFactors = FALSE)
+
 Con100 <- readRDS('controlGene100.rds')
-Info <- read.csv('Challenge.information.csv', row.names = 1, as.is = TRUE, stringsAsFactors = FALSE)
+Info <- read.csv('Challenge.information.csv', as.is = TRUE, stringsAsFactors = FALSE)
 
 ch2_data <- as.matrix(ch2_data)
 kable(ch2_data[1:4,1:4])
@@ -81,11 +83,11 @@ kable(ch2_data[1:4,1:4])
 kable(head(Info))
 ```
 
-| SampleIds | BiologicalConditions | Gender |
-|:----------|:---------------------|:-------|
-| Sample\_1 | Conditions A         | female |
-| Sample\_2 | Conditions A         | female |
-| Sample\_3 | Conditions A         | female |
-| Sample\_4 | Conditions A         | female |
-| Sample\_5 | Conditions A         | female |
-| Sample\_6 | Conditions A         | male   |
+| SampleIds | Gender | Runs | Biology           |
+|:----------|:-------|:-----|:------------------|
+| Sample\_1 | female | Run1 | Activated\_4hours |
+| Sample\_2 | female | Run1 | Activated\_4hours |
+| Sample\_3 | female | Run1 | Activated\_4hours |
+| Sample\_4 | female | Run1 | Activated\_4hours |
+| Sample\_5 | female | Run1 | Activated\_4hours |
+| Sample\_6 | male   | Run1 | Activated\_4hours |
