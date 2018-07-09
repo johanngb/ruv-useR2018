@@ -86,7 +86,18 @@ table(SampleInformation$Tissue)
     ##     Colorectal Terminal Ileum 
     ##            565            394
 
+``` r
+table(SampleInformation$Tissue, SampleInformation$Batch)
+```
+
+    ##                 
+    ##                  Batch A Batch B Batch C
+    ##   Colorectal         123     214     228
+    ##   Terminal Ileum     172      68     154
+
 The variable `Tissue` is the biology that we are interested in and we would expect that gene expression separates the different tissues. The variable `Batch` distinguishes samples processed with reagents bought at different times. The component of the regeants itself are the same but they were provided in different batches.
+
+![](replicate_plot.png)
 
 Visualise your data
 ===================
@@ -258,16 +269,16 @@ RUVcorrected <- RUVIII(Y = t(ExpressionData), M = ReplicateMatrix, ctl = c(1:nro
 Now we can visualise the data after correction and understand if we improved the data.
 
 ``` r
-ruv_svdplot(RUVcorrected, k = c(1, 2), info = SampleInformation) + geom_point(aes(color = Tissue)) + 
-    labs(color = "Tissues")
+ColorBatch <- c("magenta", "blue", "darkgreen")
+ruv_svdplot(RUVcorrected, k = c(1, 2), info = SampleInformation) + geom_point(aes(colour = Batch)) + 
+    scale_color_manual(values = ColorBatch) + labs(color = "Batches")
 ```
 
 ![](RUV-III_UseR_files/figure-markdown_github/unnamed-chunk-15-1.png)
 
 ``` r
-ColorBatch <- c("magenta", "blue", "darkgreen")
-ruv_svdplot(RUVcorrected, k = c(1, 2), info = SampleInformation) + geom_point(aes(colour = Batch)) + 
-    scale_color_manual(values = ColorBatch) + labs(color = "Batches")
+ruv_svdplot(RUVcorrected, k = c(1, 2), info = SampleInformation) + geom_point(aes(color = Tissue)) + 
+    labs(color = "Tissues")
 ```
 
 ![](RUV-III_UseR_files/figure-markdown_github/unnamed-chunk-16-1.png)
