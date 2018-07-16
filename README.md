@@ -5,7 +5,7 @@
 
 Tutorial prepared and run by:
 
-* Johann Gagnon-Bartsch
+* [Johann Gagnon-Bartsch](http://dept.stat.lsa.umich.edu/~johanngb/)
 * Marie Trussart
 * Ramyar Molania
 * Sepideh Foroutan
